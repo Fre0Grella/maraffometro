@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watchEffect } from "vue";
 import { useRouter } from "vue-router";
-import { useClaim, useLogout, useMe, useUpdateProfile } from "@/api/queries";
+import { useClaim, useDeleteAccount, useLogout, useMe, useUpdateProfile } from "@/api/queries";
 import PlayerAvatar from "@/components/PlayerAvatar.vue";
 
 const router = useRouter();
@@ -9,6 +9,8 @@ const { data: me } = useMe();
 const update = useUpdateProfile();
 const claim = useClaim();
 const logout = useLogout();
+const deleteAccount = useDeleteAccount();
+const confirmingDelete = ref(false);
 
 const form = ref({ name: "", emoji: "", color: "", motto: "" });
 const saved = ref(false);
@@ -33,6 +35,11 @@ async function save() {
 async function doClaim() {
   await claim.mutateAsync(code.value.trim());
   code.value = "";
+}
+
+async function doDelete() {
+  await deleteAccount.mutateAsync();
+  router.replace("/");
 }
 
 async function doLogout() {
@@ -117,6 +124,29 @@ async function doLogout() {
     </form>
 
     <button class="btn ghost block logout" @click="doLogout">Esci</button>
+
+    <section class="danger-zone">
+      <button v-if="!confirmingDelete" class="btn danger small" @click="confirmingDelete = true">
+        Elimina il mio account
+      </button>
+      <div v-else class="card confirm">
+        <p>
+          Nome, email, foto e motto vengono cancellati. Nelle partite già giocate resterai come "Ex giocatore", senza
+          classifica. Non si torna indietro.
+        </p>
+        <div class="row">
+          <button class="btn danger small" :disabled="deleteAccount.isPending.value" @click="doDelete">
+            Elimina definitivamente
+          </button>
+          <button class="btn ghost small" @click="confirmingDelete = false">Annulla</button>
+        </div>
+        <p v-if="deleteAccount.error.value" class="error">{{ deleteAccount.error.value.message }}</p>
+      </div>
+      <p class="muted links">
+        <RouterLink to="/privacy">Privacy</RouterLink> · <RouterLink to="/termini">Termini</RouterLink> ·
+        <a href="https://github.com/Fre0Grella/maraffometro" target="_blank" rel="noopener">Codice</a>
+      </p>
+    </section>
   </main>
 </template>
 
@@ -219,5 +249,23 @@ legend {
 }
 .logout {
   margin-top: 28px;
+}
+.danger-zone {
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+.confirm {
+  padding: 14px;
+}
+.confirm p {
+  margin: 0 0 10px;
+}
+.links {
+  font-size: 0.85rem;
+  margin: 0;
 }
 </style>

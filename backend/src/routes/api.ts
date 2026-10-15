@@ -7,6 +7,7 @@ import { clearSession, requireAuth } from "./auth";
 import {
   CLAIM_CODE_DAYS,
   defaultLook,
+  deleteAccount,
   getPlayer,
   mergeGuestInto,
   newClaimCode,
@@ -40,7 +41,7 @@ const invalid = (
 
 api.get("/me", requireAuth, async (c) => {
   const me = await getPlayer(c.env.db, c.var.playerId!);
-  if (!me) {
+  if (!me || me.deleted_at) {
     // The player was removed (or the database reset) under a still-valid cookie.
     clearSession(c);
     return c.json({ error: "Devi accedere" }, 401);
@@ -49,6 +50,13 @@ api.get("/me", requireAuth, async (c) => {
 });
 
 api.delete("/session", (c) => {
+  clearSession(c);
+  return c.json({ ok: true });
+});
+
+/** Wipes the caller's personal data and signs them out. */
+api.delete("/me", requireAuth, async (c) => {
+  await deleteAccount(c.env.db, c.var.playerId!);
   clearSession(c);
   return c.json({ ok: true });
 });
@@ -77,7 +85,7 @@ api.post(
   async (c) => {
     const { code } = c.req.valid("json");
     const guest = await c.env.db
-      .prepare("SELECT * FROM players WHERE claim_code = ? AND google_sub IS NULL")
+      .prepare("SELECT * FROM players WHERE claim_code = ? AND google_sub IS NULL AND deleted_at IS NULL")
       .bind(code)
       .first<PlayerRow>();
     if (!guest || !guest.claim_code_expires_at || guest.claim_code_expires_at < new Date().toISOString()) {
@@ -95,7 +103,7 @@ api.post(
 // ── Players ────────────────────────────────────────────────────────────────
 
 api.get("/players", async (c) => {
-  const { results } = await c.env.db.prepare("SELECT * FROM players ORDER BY name COLLATE NOCASE").all<PlayerRow>();
+  const { results } = await c.env.db.prepare("SELECT * FROM players WHERE deleted_at IS NULL ORDER BY name COLLATE NOCASE").all<PlayerRow>();
   return c.json(results.map(toPlayerDTO));
 });
 
@@ -128,7 +136,7 @@ api.get("/players/:id/stats", async (c) => {
  */
 api.post("/players/:id/claim-code", requireAuth, async (c) => {
   const guest = await getPlayer(c.env.db, c.req.param("id"));
-  if (!guest || guest.google_sub !== null) return c.json({ error: "Non è un profilo ospite" }, 404);
+  if (!guest || guest.google_sub !== null || guest.deleted_at) return c.json({ error: "Non è un profilo ospite" }, 404);
   const me = c.var.playerId!;
   const playedWith = await c.env.db
     .prepare(

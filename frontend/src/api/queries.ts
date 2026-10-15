@@ -119,6 +119,18 @@ export function useVoidMatch() {
   });
 }
 
+export function useDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<{ ok: true }>("/me", { method: "DELETE" }),
+    onSuccess: () => {
+      qc.setQueryData(keys.me, null);
+      qc.invalidateQueries({ queryKey: keys.players });
+      invalidateResults(qc);
+    },
+  });
+}
+
 export function useLogout() {
   const qc = useQueryClient();
   return useMutation({

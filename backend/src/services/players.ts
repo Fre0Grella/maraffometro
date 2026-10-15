@@ -13,6 +13,7 @@ export interface PlayerRow {
   claim_code: string | null;
   claim_code_expires_at: string | null;
   created_at: string;
+  deleted_at: string | null;
 }
 
 export function toPlayerDTO(row: PlayerRow): PlayerDTO {
@@ -100,6 +101,23 @@ export function newClaimCode(): string {
  * removes the guest. Refused if both sat in the same match, which would leave
  * one player in two seats.
  */
+/**
+ * Erases a player's personal data at their request. The row stays, renamed
+ * and unlinked from Google, because the matches the others played with them
+ * still count; signing in again with Google starts a brand-new profile.
+ */
+export async function deleteAccount(db: D1Database, playerId: string): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE players SET google_sub = NULL, email = NULL, picture_url = NULL, name = 'Ex giocatore',
+              emoji = '👤', color = '#8a8178', motto = '', claim_code = NULL, claim_code_expires_at = NULL,
+              deleted_at = ?
+        WHERE id = ?`,
+    )
+    .bind(new Date().toISOString(), playerId)
+    .run();
+}
+
 export async function mergeGuestInto(db: D1Database, guestId: string, playerId: string): Promise<"ok" | "overlap"> {
   const overlap = await db
     .prepare(

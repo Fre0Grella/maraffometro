@@ -119,7 +119,8 @@ export async function leaderboard(db: D1Database): Promise<LeaderboardEntryDTO[]
          (SELECT rc.rating_after - rc.rating_before FROM rating_changes rc JOIN matches m ON m.id = rc.match_id
            WHERE rc.player_id = p.id AND m.voided_at IS NULL ORDER BY m.played_at DESC LIMIT 1) AS last_change
        FROM ratings r JOIN players p ON p.id = r.player_id
-       ORDER BY r.rating DESC`,
+      WHERE p.deleted_at IS NULL
+      ORDER BY r.rating DESC`,
     )
     .all<LeaderRow>();
 

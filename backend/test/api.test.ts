@@ -236,6 +236,29 @@ describe("profile", () => {
   });
 });
 
+describe("deleting an account", () => {
+  it("wipes personal data but keeps the matches the others played", async () => {
+    const marco = await login("Marco");
+    const gs = [await guest(marco.cookie, "A"), await guest(marco.cookie, "B"), await guest(marco.cookie, "C")];
+    const m = match([marco.me.id, ...gs.map((g) => g.id)], [setWonBy(0, 31)]);
+    await call("POST", "/matches", marco.cookie, m);
+
+    expect((await call("DELETE", "/me", marco.cookie)).status).toBe(200);
+    expect((await call("GET", "/me", marco.cookie)).status).toBe(401);
+
+    const detail = (await (await call("GET", `/matches/${m.id}`)).json()) as MatchDetailDTO;
+    expect(detail.seats[0].name).toBe("Ex giocatore");
+    const board = (await (await call("GET", "/leaderboard")).json()) as LeaderboardEntryDTO[];
+    expect(board.map((e) => e.player.id)).not.toContain(marco.me.id);
+    const players = (await (await call("GET", "/players")).json()) as PlayerDTO[];
+    expect(players.map((p) => p.id)).not.toContain(marco.me.id);
+
+    // Signing in again is a fresh start, not the old profile.
+    const again = await login("Marco");
+    expect(again.me.id).not.toBe(marco.me.id);
+  });
+});
+
 describe("demo sign-in", () => {
   it("does not exist outside local development", async () => {
     env.ENVIRONMENT = "production";
