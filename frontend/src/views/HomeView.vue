@@ -10,9 +10,10 @@ const { data: matches } = useMatches(undefined, 3);
 const { data: me } = useMe();
 const explain = ref(false);
 
-const ranked = computed(() => (board.value ?? []).filter((e) => !e.provisional));
-const provisional = computed(() => (board.value ?? []).filter((e) => e.provisional));
-const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][rank] : "");
+const anyProvisional = computed(() => (board.value ?? []).some((e) => e.provisional));
+/** Podium colours only once a position is for real. */
+const podium = (rank: number, provisional: boolean) =>
+  !provisional && rank <= 3 ? ["", "gold", "silver", "bronze"][rank] : "";
 </script>
 
 <template>
@@ -33,14 +34,31 @@ const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][r
     </section>
 
     <template v-else>
-      <ol v-if="ranked.length" class="board card">
-        <li v-for="e in ranked" :key="e.player.id" :class="{ mine: e.player.id === me?.id }">
+      <ol class="board card">
+        <li
+          v-for="e in board"
+          :key="e.player.id"
+          :class="{ mine: e.player.id === me?.id, provisional: e.provisional }"
+        >
           <RouterLink :to="`/players/${e.player.id}`" class="row">
-            <span class="rank num" :class="podium(e.rank)">{{ e.rank }}</span>
+            <span
+              class="rank num"
+              :class="podium(e.rank, e.provisional)"
+              :title="e.provisional ? 'Posizione provvisoria' : undefined"
+            >
+              {{ e.rank }}
+            </span>
             <PlayerAvatar :player="e.player" :size="40" />
             <span class="who">
               <strong>{{ e.player.name }}</strong>
-              <small class="muted">{{ e.setsWon }}–{{ e.setsPlayed - e.setsWon }} set · {{ e.matchesPlayed }} partite</small>
+              <small class="muted">
+                <template v-if="e.provisional">
+                  <span class="trial">provvisorio · {{ e.setsPlayed }}/8 set</span>
+                </template>
+                <template v-else>
+                  {{ e.setsWon }}–{{ e.setsPlayed - e.setsWon }} set · {{ e.matchesPlayed }} partite
+                </template>
+              </small>
             </span>
             <span class="score">
               <span class="num rating">{{ e.rating }}</span>
@@ -51,25 +69,9 @@ const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][r
           </RouterLink>
         </li>
       </ol>
-
-      <template v-if="provisional.length">
-        <h2 class="section-title">In rodaggio <span class="muted">— meno di 8 set giocati</span></h2>
-        <ul class="board card provisional">
-          <li v-for="e in provisional" :key="e.player.id" :class="{ mine: e.player.id === me?.id }">
-            <RouterLink :to="`/players/${e.player.id}`" class="row">
-              <span class="rank">·</span>
-              <PlayerAvatar :player="e.player" :size="34" />
-              <span class="who">
-                <strong>{{ e.player.name }}</strong>
-                <small class="muted">{{ e.setsPlayed }} set su 8</small>
-              </span>
-              <span class="score">
-                <span class="num rating">~{{ e.rating }}</span>
-              </span>
-            </RouterLink>
-          </li>
-        </ul>
-      </template>
+      <p v-if="anyProvisional" class="legend muted">
+        <span class="rank-sample num">4</span> posizione provvisoria: diventa definitiva dopo 8 set giocati.
+      </p>
     </template>
 
     <template v-if="matches?.length">
@@ -95,7 +97,8 @@ const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][r
         </p>
         <p>
           <strong>Giocare tanto non fa salire.</strong> Conta come giochi, non quanto: chi ha poche partite viene tenuto
-          vicino alla media (1500) finché i risultati non dicono altro, e resta "in rodaggio" fino a 8 set.
+          vicino alla media (1500) finché i risultati non dicono altro. Compari in classifica dal primo set, ma la tua
+          posizione resta provvisoria fino a 8 set.
         </p>
         <p>
           Ogni <strong>set</strong> conta; vincerlo largo conta un po' di più (ma 41–0 non vale il triplo di 41–38). I
@@ -196,8 +199,32 @@ h1 {
   font-size: 1.45rem;
   font-weight: 800;
 }
-.provisional .rating {
-  font-size: 1.1rem;
+.provisional .rank,
+.rank-sample {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--ink-2);
+  font-size: 0.95rem;
+}
+.trial {
+  font-weight: 600;
+}
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 4px 0;
+  font-size: 0.82rem;
+}
+.rank-sample {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
+  font-weight: 800;
   color: var(--ink-2);
 }
 .delta {

@@ -41,14 +41,11 @@ const partnerLine = (p: PartnerStatDTO) => `${p.setsWon} su ${p.sets} set · ${p
             <span class="muted pm">± {{ stats.leaderboard.uncertainty }}</span>
           </div>
           <div class="rank">
-            <template v-if="stats.leaderboard.provisional">
-              <span class="label">In rodaggio</span>
-              <span class="muted">{{ stats.leaderboard.setsPlayed }} set su 8</span>
-            </template>
-            <template v-else>
-              <span class="label">Posizione</span>
-              <span class="num big">{{ stats.leaderboard.rank }}°</span>
-            </template>
+            <span class="label">{{ stats.leaderboard.provisional ? "Posizione provvisoria" : "Posizione" }}</span>
+            <span class="num big" :class="{ temp: stats.leaderboard.provisional }">{{ stats.leaderboard.rank }}°</span>
+            <span v-if="stats.leaderboard.provisional" class="muted sets">
+              {{ stats.leaderboard.setsPlayed }}/8 set per renderla definitiva
+            </span>
           </div>
         </template>
         <p v-else class="muted">Ancora nessun set finito: niente punteggio per ora.</p>
@@ -184,7 +181,15 @@ h1 {
   font-size: 0.9rem;
 }
 .rank {
+  display: grid;
+  justify-items: end;
   text-align: right;
+}
+.big.temp {
+  color: var(--ink-2);
+}
+.sets {
+  font-size: 0.8rem;
 }
 .form-row {
   display: flex;

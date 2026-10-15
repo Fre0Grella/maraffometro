@@ -48,9 +48,11 @@ not at the bottom. As results pile up, the prior matters less and the rating
 moves to where the results say, up *or* down. Playing many games at a 50% rate
 keeps you at 1500 however many you play (there's a test for exactly that).
 
-**Provisional players** (fewer than 8 finished sets) are listed separately, "in
-rodaggio", without a rank number, so two lucky sets are not read as a verdict.
-They aren't hidden or penalised.
+**Provisional positions.** Everyone is ranked from their first finished set,
+in one list, by rating. Below 8 finished sets the position is marked as
+provisional (a dashed outline and an "n/8 set" counter, no podium colours),
+so two lucky sets aren't read as a verdict. Nothing is hidden or penalised;
+at the 8th set the position simply becomes definitive.
 
 ## The weights
 

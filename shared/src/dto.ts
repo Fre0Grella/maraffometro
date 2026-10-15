@@ -38,6 +38,7 @@ export interface ClaimCodeDTO {
 }
 
 export interface LeaderboardEntryDTO {
+  /** Position by rating, 1-based, provisional players included. */
   rank: number;
   player: PlayerDTO;
   /** Elo-like scale, 1500 is the group average. */
@@ -46,6 +47,7 @@ export interface LeaderboardEntryDTO {
   uncertainty: number;
   /** Change at the player's last match, if any. */
   lastChange: number | null;
+  /** Fewer than 8 finished sets: the position is shown as temporary. */
   provisional: boolean;
   setsPlayed: number;
   setsWon: number;

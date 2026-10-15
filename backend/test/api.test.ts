@@ -96,6 +96,9 @@ describe("recording a match", () => {
     const mine = board.find((e) => e.player.id === me.id)!;
     expect(mine.rating).toBeGreaterThan(1500);
     expect(mine.provisional).toBe(true);
+    // Ranked from the first set, provisional or not.
+    expect(board.map((e) => e.rank)).toEqual([1, 2, 3, 4]);
+    expect(mine.rank).toBeLessThanOrEqual(2);
     expect(mine.matchesWon).toBe(1);
     expect(mine.setsWon).toBe(2);
 

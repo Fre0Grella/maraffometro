@@ -124,14 +124,12 @@ export async function leaderboard(db: D1Database): Promise<LeaderboardEntryDTO[]
     )
     .all<LeaderRow>();
 
-  // Provisional players are listed but not ranked: a number beside a name
-  // that two lucky sets put there would be read as a verdict.
-  let rank = 0;
-  return results.map((r) => {
+  // Everyone is ranked from their first finished set; below PROVISIONAL_SETS
+  // the position is flagged provisional, and the app shows it as such.
+  return results.map((r, i) => {
     const provisional = r.sets_rated < PROVISIONAL_SETS;
-    if (!provisional) rank++;
     return {
-      rank: provisional ? 0 : rank,
+      rank: i + 1,
       player: toPlayerDTO(r),
       rating: Math.round(r.rating),
       uncertainty: Math.round(r.uncertainty),
