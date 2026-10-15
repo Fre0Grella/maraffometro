@@ -1,0 +1,223 @@
+<script setup lang="ts">
+import { computed, ref, watchEffect } from "vue";
+import { useRouter } from "vue-router";
+import { useClaim, useLogout, useMe, useUpdateProfile } from "@/api/queries";
+import PlayerAvatar from "@/components/PlayerAvatar.vue";
+
+const router = useRouter();
+const { data: me } = useMe();
+const update = useUpdateProfile();
+const claim = useClaim();
+const logout = useLogout();
+
+const form = ref({ name: "", emoji: "", color: "", motto: "" });
+const saved = ref(false);
+watchEffect(() => {
+  if (me.value && !form.value.name) {
+    form.value = { name: me.value.name, emoji: me.value.emoji, color: me.value.color, motto: me.value.motto };
+  }
+});
+
+const EMOJIS = ["🃏", "🂡", "🍷", "🐓", "🦊", "🐗", "🌶️", "🍝", "🎩", "⚡", "🔥", "🌊", "🦉", "🐺", "🍀", "👑", "🎯", "🧠", "🥖", "☕"];
+const COLORS = ["#b4442c", "#2f6b4f", "#c08a1e", "#3d5a99", "#7a3e6e", "#4f7c8a", "#8a5a2b", "#2a1f17"];
+
+const preview = computed(() => ({ ...form.value, name: form.value.name || "?" }));
+const code = ref("");
+
+async function save() {
+  saved.value = false;
+  await update.mutateAsync(form.value);
+  saved.value = true;
+}
+
+async function doClaim() {
+  await claim.mutateAsync(code.value.trim());
+  code.value = "";
+}
+
+async function doLogout() {
+  await logout.mutateAsync();
+  router.replace("/");
+}
+</script>
+
+<template>
+  <main v-if="me" class="page">
+    <h1>Il tuo profilo</h1>
+
+    <div class="preview card">
+      <PlayerAvatar :player="preview" :size="64" />
+      <div>
+        <strong>{{ preview.name }}</strong>
+        <p v-if="form.motto" class="muted">“{{ form.motto }}”</p>
+      </div>
+      <RouterLink :to="`/giocatori/${me.id}`" class="stats-link muted">Statistiche →</RouterLink>
+    </div>
+
+    <form class="form" @submit.prevent="save">
+      <label class="field">
+        Nome al tavolo
+        <input v-model="form.name" maxlength="30" required />
+      </label>
+
+      <fieldset>
+        <legend>Simbolo</legend>
+        <div class="emojis">
+          <button
+            v-for="e in EMOJIS"
+            :key="e"
+            type="button"
+            :class="{ on: form.emoji === e }"
+            :aria-pressed="form.emoji === e"
+            @click="form.emoji = e"
+          >
+            {{ e }}
+          </button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Colore</legend>
+        <div class="colors">
+          <button
+            v-for="c in COLORS"
+            :key="c"
+            type="button"
+            :style="{ background: c }"
+            :class="{ on: form.color === c }"
+            :aria-label="`Colore ${c}`"
+            :aria-pressed="form.color === c"
+            @click="form.color = c"
+          />
+        </div>
+      </fieldset>
+
+      <label class="field">
+        Motto <small class="muted">(facoltativo)</small>
+        <input v-model="form.motto" maxlength="80" placeholder="Busso, striscio, volo." />
+      </label>
+
+      <button class="btn block" :disabled="update.isPending.value">Salva</button>
+      <p v-if="saved && !update.isPending.value" class="ok">Salvato.</p>
+      <p v-if="update.error.value" class="error">{{ update.error.value.message }}</p>
+    </form>
+
+    <h2 class="section-title">Reclama un profilo ospite</h2>
+    <form class="claim card" @submit.prevent="doClaim">
+      <p class="muted">
+        Se qualcuno ti ha registrato come ospite prima che entrassi, fatti dare il codice dal suo profilo: le partite
+        passano a te.
+      </p>
+      <div class="row">
+        <input v-model="code" class="code num" maxlength="6" placeholder="ABC123" autocapitalize="characters" aria-label="Codice" />
+        <button class="btn" :disabled="code.trim().length !== 6 || claim.isPending.value">Reclama</button>
+      </div>
+      <p v-if="claim.data.value" class="ok">Fatto: le partite di {{ claim.data.value.claimed.name }} ora sono tue.</p>
+      <p v-if="claim.error.value" class="error">{{ claim.error.value.message }}</p>
+    </form>
+
+    <button class="btn ghost block logout" @click="doLogout">Esci</button>
+  </main>
+</template>
+
+<style scoped>
+h1 {
+  font-size: 2rem;
+  margin: 8px 0 16px;
+}
+.preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+}
+.preview p {
+  margin: 2px 0 0;
+  font-style: italic;
+}
+.stats-link {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.form {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+.emojis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+}
+.emojis button {
+  height: 44px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+.emojis .on {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.colors button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--paper);
+  box-shadow: 0 0 0 1.5px var(--line);
+  cursor: pointer;
+}
+.colors .on {
+  box-shadow: 0 0 0 2.5px var(--ink);
+}
+.ok {
+  color: var(--ok);
+  font-weight: 600;
+  margin: 0;
+}
+.claim {
+  padding: 14px;
+}
+.claim p {
+  margin: 0 0 10px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+}
+.code {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-size: 1.3rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.logout {
+  margin-top: 28px;
+}
+</style>

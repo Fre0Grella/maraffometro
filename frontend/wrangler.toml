@@ -1,0 +1,10 @@
+# Cloudflare Pages project. The functions/ directory proxies /api and the
+# Google sign-in to the Worker through a service binding, so the app and the
+# API share one origin and the session cookie stays first-party.
+name = "maraffometro"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+
+[[services]]
+binding = "BACKEND"
+service = "maraffometro-api"

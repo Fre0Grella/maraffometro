@@ -1,0 +1,205 @@
+/*
+ * Maraffometro: an osteria table. Cream paper, ink, terracotta for team A,
+ * felt green for team B, ochre for the maraffa. Display numbers in Fraunces,
+ * everything else in Figtree.
+ */
+:root {
+  --paper: #f4ecdd;
+  --paper-2: #ebe0cc;
+  --card: #fffaf1;
+  --ink: #2a1f17;
+  --ink-2: #6b5a4b;
+  --line: #d9cbb3;
+  --team-a: #b4442c;
+  --team-a-soft: #f3d9cf;
+  --team-b: #24604a;
+  --team-b-soft: #d3e6dc;
+  --gold: #c08a1e;
+  --gold-soft: #f6e5bd;
+  --felt: #1f4d3c;
+  --danger: #a3261b;
+  --ok: #2f7a4a;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 0 rgba(42, 31, 23, 0.06), 0 6px 18px -10px rgba(42, 31, 23, 0.35);
+  --display: "Fraunces", Georgia, serif;
+  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1b1612;
+    --paper-2: #241d18;
+    --card: #2a221c;
+    --ink: #f1e6d4;
+    --ink-2: #b4a38f;
+    --line: #3d3229;
+    --team-a: #e0765b;
+    --team-a-soft: #4a2a21;
+    --team-b: #5fb38f;
+    --team-b-soft: #1f3a2f;
+    --gold: #e2b04a;
+    --gold-soft: #463613;
+    --felt: #173b2e;
+    --danger: #ef7466;
+    --ok: #6cc28c;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 8px 20px -12px rgba(0, 0, 0, 0.8);
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.45 var(--body);
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+}
+
+.section-title {
+  font-family: var(--body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin: 28px 0 10px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1.5px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.15s ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+}
+.btn.danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn.block {
+  width: 100%;
+}
+.btn.small {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.field input,
+.field select {
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-weight: 500;
+  font-size: 1rem;
+}
+.field input:focus-visible {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.muted {
+  color: var(--ink-2);
+}
+.error {
+  color: var(--danger);
+  font-weight: 600;
+}
+.num {
+  font-family: var(--display);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.team-a {
+  color: var(--team-a);
+}
+.team-b {
+  color: var(--team-b);
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
