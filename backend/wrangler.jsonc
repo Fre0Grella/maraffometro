@@ -12,7 +12,7 @@
     {
       "binding": "db",
       "database_name": "maraffometro-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "48bbd1d9-9518-4475-87f9-553214de9902",
       "migrations_dir": "migrations"
     }
   ],

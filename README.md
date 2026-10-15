@@ -56,25 +56,30 @@ npm run typecheck
 
 Pushing to `main` runs CI and, once set up, deploys D1 migrations → Worker → Pages.
 
-**One-time setup** (needs [`gh`](https://cli.github.com) signed in):
+**Already created** on the Cloudflare account: D1 `maraffometro-db`, the Worker
+`maraffometro-api`, the Pages project at https://maraffometro.pages.dev, and the
+`JWT_SECRET` (on the Worker and as a GitHub secret) plus `CLOUDFLARE_ACCOUNT_ID`.
 
-1. **Cloudflare API token** (My Profile → API Tokens → Create custom token) with
-   *Account* permissions: **D1 Edit**, **Workers Scripts Edit**, **Cloudflare
-   Pages Edit**, **Account Settings Read**. Also note your **account id**.
-2. **Google OAuth client** (Google Cloud console → APIs & Services → Credentials
-   → OAuth client ID → Web application). Authorised redirect URIs:
-   - `https://maraffometro.pages.dev/auth/google` (the script prints the exact
-     one if Cloudflare assigns a different subdomain)
+**Still to do, once:**
+
+1. **Google OAuth client** (Google Cloud console → APIs & Services → Credentials
+   → OAuth client ID → Web application) with these authorised redirect URIs:
+   - `https://maraffometro.pages.dev/auth/google`
    - `http://localhost:5173/auth/google`
-3. Run:
+2. **Cloudflare API token** for CI (My Profile → API Tokens → Create custom
+   token), *Account* permissions **D1 Edit**, **Workers Scripts Edit**,
+   **Cloudflare Pages Edit**, **Account Settings Read**.
+3. **GitHub secrets** (repo → Settings → Secrets and variables → Actions):
+   `CLOUDFLARE_API_TOKEN`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+   `ADMIN_EMAILS` (your Google email; may void any match). Then turn deploys on:
    ```bash
-   bash scripts/setup-cloudflare.sh
+   gh variable set DEPLOY_ENABLED --body true && gh workflow run ci.yml
    ```
-   It creates the D1 database and the Pages project, writes their id/URL into
-   `backend/wrangler.jsonc`, stores `CLOUDFLARE_API_TOKEN`,
-   `CLOUDFLARE_ACCOUNT_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
-   `ADMIN_EMAILS` and a generated `JWT_SECRET` as GitHub secrets, enables deploys
-   (`DEPLOY_ENABLED` variable), and offers to push.
+4. **Local Google sign-in** (optional): put the same client id and secret in
+   `backend/.dev.vars`.
+
+`scripts/setup-cloudflare.sh` does all of the above from scratch, for a fork or
+a new account.
 
 ## Rules as implemented
 
