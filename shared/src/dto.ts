@@ -140,6 +140,15 @@ export interface PartnerStatDTO {
   setsWon: number;
 }
 
+export interface BestSetDTO {
+  matchId: string;
+  playedAt: string;
+  target: SetTarget;
+  /** The player's pair first. */
+  score: [number, number];
+  margin: number;
+}
+
 export interface PlayerStatsDTO {
   player: PlayerDTO;
   leaderboard: LeaderboardEntryDTO | null;
@@ -151,6 +160,12 @@ export interface PlayerStatsDTO {
   handsPlayed: number;
   maraffas: number;
   maraffasAgainst: number;
+  /** Hands the player's pair won 11–0: every card point, no maraffa. */
+  elevenZero: number;
+  /** Hands the player's pair won 14–0: every card point plus their maraffa. */
+  fourteenZero: number;
+  /** The set won by the widest margin; score is the player's pair first. */
+  bestSet: BestSetDTO | null;
   /** Card points per hand while the player's pair was di mano. */
   avgPointsMano: number | null;
   /** Card points per hand while the other pair was di mano. */

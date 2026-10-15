@@ -15,6 +15,7 @@ const claimCode = useClaimCode();
 const isMe = computed(() => me.value?.id === props.id);
 const pct = (won: number, played: number) => (played ? `${Math.round((won / played) * 100)}%` : "—");
 const avg = (n: number | null) => (n === null ? "—" : n.toFixed(1).replace(".", ","));
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "short" });
 const partnerLine = (p: PartnerStatDTO) => `${p.setsWon} su ${p.sets} set · ${pct(p.setsWon, p.sets)}`;
 </script>
 
@@ -74,6 +75,21 @@ const partnerLine = (p: PartnerStatDTO) => `${p.setsWon} su ${p.sets} set · ${p
           <span class="num v">{{ stats.maraffasAgainst }}</span>
           <span class="k">maraffe subite</span>
         </div>
+        <div class="tile card">
+          <span class="num v">{{ stats.elevenZero }}</span>
+          <span class="k">mani vinte 11-0</span>
+        </div>
+        <div class="tile card gold">
+          <span class="num v">{{ stats.fourteenZero }}</span>
+          <span class="k">mani vinte 14-0</span>
+        </div>
+        <RouterLink v-if="stats.bestSet" :to="`/matches/${stats.bestSet.matchId}`" class="tile card wide best">
+          <span class="num v">
+            {{ stats.bestSet.score[0] }}–{{ stats.bestSet.score[1] }}
+            <small class="margin">+{{ stats.bestSet.margin }}</small>
+          </span>
+          <span class="k">miglior set vinto · a {{ stats.bestSet.target }}, {{ shortDate(stats.bestSet.playedAt) }} →</span>
+        </RouterLink>
         <div class="tile card">
           <span class="num v">{{ avg(stats.avgPointsMano) }}</span>
           <span class="k">media punti di mano</span>
@@ -209,6 +225,17 @@ h1 {
   display: grid;
   gap: 2px;
   padding: 12px 14px;
+}
+.tile.wide {
+  grid-column: 1 / -1;
+}
+.tile.best {
+  text-decoration: none;
+}
+.margin {
+  margin-left: 6px;
+  font-size: 0.55em;
+  color: var(--ok);
 }
 .tile.gold {
   background: var(--gold-soft);

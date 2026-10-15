@@ -134,6 +134,34 @@ describe("recording a match", () => {
     expect(stats.avgPointsMano! + stats.avgPointsFuoriMano!).toBeGreaterThan(0);
   });
 
+  it("counts 11-0 and 14-0 hands and finds the best set won", async () => {
+    const { cookie, me } = await login("Marco");
+    const gs = [await guest(cookie, "Ale"), await guest(cookie, "Bea"), await guest(cookie, "Cico")];
+    const h = (manoSeat: Seat, a: number, b: number, maraffa = false): Hand => ({ manoSeat, points: [a, b], maraffa });
+    // Set 1, Marco's pair (A) wins 36–0: a 14-0 (their maraffa) and two 11-0.
+    const whitewash = { target: 31 as const, hands: [h(0, 11, 0, true), h(1, 11, 0), h(2, 11, 0)] };
+    // Set 2, B wins 33–8 with two 11-0 of their own, which Marco suffered: not counted for him.
+    const lost = { target: 31 as const, hands: [h(3, 0, 11), h(0, 4, 7), h(1, 0, 11), h(2, 4, 4)] };
+    // Set 3, A wins 41–33 (B ends on a maraffa): a narrower win, so set 1 stays the best.
+    const close = {
+      target: 41 as const,
+      hands: [h(3, 6, 5), h(0, 6, 5), h(1, 6, 5), h(2, 6, 5), h(3, 6, 5), h(0, 6, 5), h(1, 5, 0, true)],
+    };
+    const m = match([me.id, ...gs.map((g) => g.id)], [whitewash, lost, close]);
+    expect((await call("POST", "/matches", cookie, m)).status).toBe(201);
+
+    const stats = (await (await call("GET", `/players/${me.id}/stats`)).json()) as PlayerStatsDTO;
+    expect(stats.fourteenZero).toBe(1);
+    expect(stats.elevenZero).toBe(2);
+    expect(stats.bestSet).toMatchObject({ matchId: m.id, score: [36, 0], margin: 36, target: 31 });
+
+    // From the other side of the table, the two 11-0 in set 2 are theirs and the best set is 33–8.
+    const theirs = (await (await call("GET", `/players/${gs[0]!.id}/stats`)).json()) as PlayerStatsDTO;
+    expect(theirs.elevenZero).toBe(2);
+    expect(theirs.fourteenZero).toBe(0);
+    expect(theirs.bestSet).toMatchObject({ score: [33, 8], margin: 25 });
+  });
+
   it("saves a long best-of-three within D1's 50 queries per request", async () => {
     const { cookie, me } = await login("Marco");
     const gs = [];

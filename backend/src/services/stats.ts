@@ -1,4 +1,5 @@
-import type { PartnerStatDTO, PlayerStatsDTO, Seat, Team } from "@maraffometro/shared";
+import type { BestSetDTO, PartnerStatDTO, PlayerStatsDTO, Seat, SetTarget, Team } from "@maraffometro/shared";
+import { HAND_POINTS } from "@maraffometro/shared";
 import { leaderboard } from "./ratings";
 import { listMatches } from "./matches";
 import { playersById, toPlayerDTO, type PlayerRow } from "./players";
@@ -16,6 +17,11 @@ interface MySeatRow {
 interface SetSeatRow {
   /** match id and set index: one key per set. */
   k: string;
+  match_id: string;
+  target: SetTarget;
+  score_a: number;
+  score_b: number;
+  played_at: string;
   winner_team: Team;
   seat: Seat;
   player_id: string;
@@ -46,7 +52,8 @@ export async function playerStats(db: D1Database, player: PlayerRow): Promise<Pl
       .bind(id),
     db
       .prepare(
-        `SELECT s.match_id || ':' || s.set_index AS k, s.winner_team, mp.seat, mp.player_id FROM match_sets s
+        `SELECT s.match_id || ':' || s.set_index AS k, s.match_id, s.target, s.score_a, s.score_b, m.played_at,
+                s.winner_team, mp.seat, mp.player_id FROM match_sets s
            JOIN matches m ON m.id = s.match_id
            JOIN match_players mp ON mp.match_id = s.match_id
           WHERE m.voided_at IS NULL AND s.winner_team IS NOT NULL
@@ -77,10 +84,10 @@ export async function playerStats(db: D1Database, player: PlayerRow): Promise<Pl
   }
 
   // Sets, partners, opponents. Each set comes back once per seat; group them.
-  const setsBy = new Map<string, { winner: Team; seats: string[] }>();
+  const setsBy = new Map<string, { winner: Team; seats: string[]; row: SetSeatRow }>();
   for (const r of sets!.results as SetSeatRow[]) {
     let g = setsBy.get(r.k);
-    if (!g) setsBy.set(r.k, (g = { winner: r.winner_team, seats: [] }));
+    if (!g) setsBy.set(r.k, (g = { winner: r.winner_team, seats: [], row: r }));
     g.seats[r.seat] = r.player_id;
   }
 
@@ -94,13 +101,22 @@ export async function playerStats(db: D1Database, player: PlayerRow): Promise<Pl
     if (won) s.setsWon++;
     map.set(pid, s);
   };
-  for (const { winner, seats } of setsBy.values()) {
+  let bestSet: BestSetDTO | null = null;
+  for (const { winner, seats, row } of setsBy.values()) {
     const mySeat = seats.indexOf(id);
     if (mySeat < 0) continue;
     const myTeam = (mySeat % 2) as Team;
     const won = winner === myTeam;
     setsPlayed++;
     if (won) setsWon++;
+    if (won) {
+      const score: [number, number] = myTeam === 0 ? [row.score_a, row.score_b] : [row.score_b, row.score_a];
+      const margin = score[0] - score[1];
+      // Widest margin wins; on a tie, the earlier set keeps the record.
+      if (!bestSet || margin > bestSet.margin || (margin === bestSet.margin && row.played_at < bestSet.playedAt)) {
+        bestSet = { matchId: row.match_id, playedAt: row.played_at, target: row.target, score, margin };
+      }
+    }
     bump(partners, seats[(mySeat + 2) % 4]!, won);
     bump(opponents, seats[(mySeat + 1) % 4]!, won);
     bump(opponents, seats[(mySeat + 3) % 4]!, won);
@@ -110,6 +126,8 @@ export async function playerStats(db: D1Database, player: PlayerRow): Promise<Pl
   let handsPlayed = 0;
   let maraffas = 0;
   let maraffasAgainst = 0;
+  let elevenZero = 0;
+  let fourteenZero = 0;
   const mano = { hands: 0, points: 0 };
   const fuori = { hands: 0, points: 0 };
   for (const h of hands!.results as HandRow[]) {
@@ -122,6 +140,13 @@ export async function playerStats(db: D1Database, player: PlayerRow): Promise<Pl
     acc.points += myPoints;
     if (h.maraffa && h.mano_seat === me.seat) maraffas++;
     else if (h.maraffa && h.mano_seat % 2 !== me.team) maraffasAgainst++;
+    // A whitewash: the pair took all eleven and the others nothing at all.
+    const theirPoints = me.team === 0 ? h.points_b : h.points_a;
+    const oursMaraffa = h.maraffa === 1 && h.mano_seat % 2 === me.team;
+    if (myPoints === HAND_POINTS && theirPoints === 0) {
+      if (oursMaraffa) fourteenZero++;
+      else if (!h.maraffa) elevenZero++;
+    }
   }
 
   const people = await playersById(db, [...partners.keys(), ...opponents.keys()]);
@@ -149,6 +174,9 @@ export async function playerStats(db: D1Database, player: PlayerRow): Promise<Pl
     handsPlayed,
     maraffas,
     maraffasAgainst,
+    elevenZero,
+    fourteenZero,
+    bestSet,
     avgPointsMano: mano.hands ? mano.points / mano.hands : null,
     avgPointsFuoriMano: fuori.hands ? fuori.points / fuori.hands : null,
     bestPartner: best ? stat(best[0], best[1]) : null,
