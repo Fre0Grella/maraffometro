@@ -2,6 +2,7 @@
 import { computed, ref, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useMe } from "@/api/queries";
+import PlayingCard, { type Suit } from "@/components/PlayingCard.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -13,15 +14,19 @@ const failed = computed(() => route.query.error !== undefined);
 /** The demo sign-in only exists on a local Worker; the button only exists in a dev build. */
 const devLogin = import.meta.env.DEV;
 const devName = ref("Marco");
+
+/** A maraffa (ace, two, three of one suit) in a suit of the day. */
+const SUITS: Suit[] = ["denari", "coppe", "spade", "bastoni"];
+const suit = SUITS[Math.floor(Math.random() * SUITS.length)]!;
 </script>
 
 <template>
   <main class="page login">
     <div class="hero">
       <div class="cards" aria-hidden="true">
-        <span class="c c1">A</span>
-        <span class="c c2">2</span>
-        <span class="c c3">3</span>
+        <PlayingCard class="c c1" rank="A" :suit="suit" />
+        <PlayingCard class="c c2" rank="2" :suit="suit" />
+        <PlayingCard class="c c3" rank="3" :suit="suit" />
       </div>
       <h1>Maraffometro</h1>
       <p class="muted">La classifica della Maraffa in pausa pranzo. Chi bussa, chi striscia, chi vince davvero.</p>
@@ -75,38 +80,22 @@ h1 {
 }
 .cards {
   position: relative;
-  width: 180px;
-  height: 110px;
-  margin-bottom: 8px;
+  width: 250px;
+  height: 150px;
+  margin-bottom: 4px;
 }
 .c {
   position: absolute;
-  top: 10px;
+  top: 14px;
   left: 50%;
-  display: grid;
-  place-items: center;
-  width: 62px;
-  height: 90px;
-  margin-left: -31px;
-  border-radius: 9px;
-  background: var(--card);
-  border: 2px solid var(--ink);
-  font-family: var(--display);
-  font-size: 1.9rem;
-  font-weight: 800;
-  color: var(--team-a);
-  box-shadow: var(--shadow);
+  margin-left: -41px;
+  transform-origin: 50% 120%;
 }
 .c1 {
-  transform: translateX(-50px) rotate(-14deg);
-}
-.c2 {
-  transform: translateY(-6px);
-  color: var(--gold);
+  transform: translateX(-58px) rotate(-15deg);
 }
 .c3 {
-  transform: translateX(50px) rotate(14deg);
-  color: var(--team-b);
+  transform: translateX(58px) rotate(15deg);
 }
 .google {
   background: var(--card);

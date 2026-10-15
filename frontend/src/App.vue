@@ -199,8 +199,7 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr auto 1fr;
   align-items: end;
   padding: 6px 12px calc(8px + env(safe-area-inset-bottom));
-  background: var(--paper);
-  border-top: 1px solid var(--line);
+  background: var(--bar);
 }
 .tab {
   display: grid;
@@ -210,7 +209,7 @@ onBeforeUnmount(() => {
   font-size: 0.75rem;
   font-weight: 600;
   text-decoration: none;
-  color: var(--ink-2);
+  color: color-mix(in srgb, var(--bar-ink) 62%, transparent);
 }
 .tab svg {
   width: 24px;
@@ -222,10 +221,10 @@ onBeforeUnmount(() => {
   stroke-linejoin: round;
 }
 .tab.on {
-  color: var(--ink);
+  color: var(--bar-ink);
 }
 .play {
-  color: var(--ink);
+  color: var(--bar-ink);
   margin-top: -22px;
 }
 .play-disc {
@@ -236,18 +235,19 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   background: var(--team-a);
   box-shadow: 0 6px 16px -6px var(--team-a);
-  border: 4px solid var(--paper);
+  border: 4px solid var(--bar);
 }
 .play-disc svg {
   stroke: #fff;
   stroke-width: 2.6;
 }
+/* A match in progress: gold, which stands out on the green bar. */
 .play.live .play-disc {
-  background: var(--team-b);
-  box-shadow: 0 6px 16px -6px var(--team-b);
+  background: var(--gold);
+  box-shadow: 0 6px 16px -6px #000;
 }
 .play.live .play-disc svg {
-  fill: #fff;
+  fill: #2a1f17;
   stroke: none;
 }
 </style>

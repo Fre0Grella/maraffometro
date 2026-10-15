@@ -44,8 +44,10 @@ export default defineConfig({
         display: "standalone",
         orientation: "portrait",
         background_color: "#f4ecdd",
-        // Same cream as the launch screen, so the system splash and ours blend.
-        theme_color: "#f4ecdd",
+        // Android paints its system navigation bar with this: the same felt
+        // green as the tab bar (--bar in styles.css), so the two blend. The
+        // status bar follows the page's own theme-color meta (cream).
+        theme_color: "#1f4d3c",
         icons: [
           { src: "/pwa-192.png", sizes: "192x192", type: "image/png" },
           { src: "/pwa-512.png", sizes: "512x512", type: "image/png" },

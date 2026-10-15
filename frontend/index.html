@@ -71,21 +71,20 @@
         bottom: 7px;
         transform: rotate(180deg);
       }
-      /* The denari coin in the middle of each card. */
-      .splash-card i {
+      .splash-card svg {
         position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 34px;
-        height: 34px;
-        margin: -17px 0 0 -17px;
-        border-radius: 50%;
-        background: radial-gradient(circle, #f3d58a 0 36%, var(--c) 38% 100%);
-        box-shadow: inset 0 0 0 2px rgba(42, 31, 23, 0.18);
+        inset: 0;
+        width: 100%;
+        height: 100%;
       }
-      .splash-card.c1 { --c: #b4442c; --d: 0.05s; --x: -58px; --r: -15deg; }
-      .splash-card.c2 { --c: #c08a1e; --d: 0.2s; --x: 0px; --r: 0deg; }
-      .splash-card.c3 { --c: #24604a; --d: 0.35s; --x: 58px; --r: 15deg; }
+      .splash-card.c1 { --d: 0.05s; --x: -58px; --r: -15deg; }
+      .splash-card.c2 { --d: 0.2s; --x: 0px; --r: 0deg; }
+      .splash-card.c3 { --d: 0.35s; --x: 58px; --r: 15deg; }
+      /* Ace, two and three of one suit: a maraffa. The suit changes each launch. */
+      #splash { --c: #a8751a; }
+      #splash[data-suit="coppe"] { --c: #b4442c; }
+      #splash[data-suit="spade"] { --c: #3d5a99; }
+      #splash[data-suit="bastoni"] { --c: #8a5a24; }
       .splash-name {
         font: 800 30px/1 Georgia, "Times New Roman", serif;
         letter-spacing: -0.02em;
@@ -144,14 +143,65 @@
         }
       }
     </style>
-    <div id="splash" aria-hidden="true">
+    <!--
+      The four Italian suits, drawn once and reused by <use href="#s-…">: the
+      launch screen below and the app's PlayingCard component both point here.
+      Outside #splash on purpose, since the splash is removed after loading.
+    -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <symbol id="s-denari" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r="18" fill="#c08a1e" stroke="#2a1f17" stroke-width="1.6" />
+          <circle cx="20" cy="20" r="13.5" fill="none" stroke="#2a1f17" stroke-width="0.9" stroke-dasharray="1.6 2.2" />
+          <circle cx="20" cy="20" r="10" fill="#b4442c" stroke="#2a1f17" stroke-width="1.2" />
+          <circle cx="20" cy="20" r="4.6" fill="#f3d58a" stroke="#2a1f17" stroke-width="1" />
+        </symbol>
+        <symbol id="s-coppe" viewBox="0 0 40 40">
+          <path d="M8.5 9h23c0 8.6-4.6 14.5-11.5 14.5S8.5 17.6 8.5 9z" fill="#b4442c" stroke="#2a1f17" stroke-width="1.6" stroke-linejoin="round" />
+          <path d="M11 14.5h18" stroke="#f3d58a" stroke-width="1.6" stroke-linecap="round" />
+          <rect x="6.5" y="5.5" width="27" height="4.5" rx="2.2" fill="#c08a1e" stroke="#2a1f17" stroke-width="1.4" />
+          <path d="M17.6 23.2h4.8v6.4h-4.8z" fill="#c08a1e" stroke="#2a1f17" stroke-width="1.3" />
+          <path d="M10.5 36c0-3.6 4.2-6.4 9.5-6.4s9.5 2.8 9.5 6.4z" fill="#c08a1e" stroke="#2a1f17" stroke-width="1.5" stroke-linejoin="round" />
+        </symbol>
+        <symbol id="s-spade" viewBox="0 0 40 40">
+          <path d="M20 1.8 24 8.6v18.6h-8V8.6z" fill="#b9c8d6" stroke="#2a1f17" stroke-width="1.5" stroke-linejoin="round" />
+          <path d="M20 6v20" stroke="#6f8399" stroke-width="1.2" />
+          <rect x="8.5" y="26.6" width="23" height="4.4" rx="2.2" fill="#c08a1e" stroke="#2a1f17" stroke-width="1.4" />
+          <rect x="17.8" y="31" width="4.4" height="5.4" fill="#3d5a99" stroke="#2a1f17" stroke-width="1.2" />
+          <circle cx="20" cy="37.6" r="2.1" fill="#c08a1e" stroke="#2a1f17" stroke-width="1.1" />
+        </symbol>
+        <symbol id="s-bastoni" viewBox="0 0 40 40">
+          <!-- A wooden club: slim grip swelling to a rounded head, grain, flush knots, a bound handle. -->
+          <g transform="rotate(32 20 20) translate(20 20) scale(1.3 1.04) translate(-20 -20)">
+            <path d="M17.6 37.6c1.6 1.4 3.2 1.4 4.8 0l2.9-28.4c.4-4.3-2.2-7-5.3-7s-5.7 2.7-5.3 7z" fill="#c98a3c" stroke="#2a1f17" stroke-width="1.5" stroke-linejoin="round" />
+            <path d="M16.9 7.6c-.3 2.4-.4 4.8-.2 7.2" stroke="#e8b46a" stroke-width="1.6" fill="none" stroke-linecap="round" />
+            <path d="M18.4 9c-.3 6.2.2 13.6.9 22.4M22.2 6.8c.3 4.8-.1 9.8-.6 14.6" stroke="#8a5a24" stroke-width="0.9" fill="none" stroke-linecap="round" />
+            <ellipse cx="21.6" cy="13.4" rx="1.7" ry="1.15" fill="#8a5a24" />
+            <ellipse cx="19.2" cy="23" rx="1.45" ry="1" fill="#8a5a24" />
+            <path d="M17.5 31.6h5.3M17.6 34h5" stroke="#b4442c" stroke-width="1.7" />
+          </g>
+        </symbol>
+      </defs>
+    </svg>
+    <div id="splash" aria-hidden="true" data-suit="denari">
       <div class="splash-fan">
-        <div class="splash-card c1"><b>A</b><i></i><b>A</b></div>
-        <div class="splash-card c2"><b>2</b><i></i><b>2</b></div>
-        <div class="splash-card c3"><b>3</b><i></i><b>3</b></div>
+        <div class="splash-card c1"><b>A</b><svg viewBox="0 0 82 120"><use href="#s-denari" x="17" y="36" width="48" height="48" /></svg><b>A</b></div>
+        <div class="splash-card c2"><b>2</b><svg viewBox="0 0 82 120"><use href="#s-denari" x="24" y="20" width="34" height="34" /><use href="#s-denari" x="24" y="66" width="34" height="34" /></svg><b>2</b></div>
+        <div class="splash-card c3"><b>3</b><svg viewBox="0 0 82 120"><use href="#s-denari" x="26" y="11" width="30" height="30" /><use href="#s-denari" x="26" y="45" width="30" height="30" /><use href="#s-denari" x="26" y="79" width="30" height="30" /></svg><b>3</b></div>
       </div>
       <div class="splash-name">Maraffometro</div>
     </div>
+    <script>
+      // Today's trumps: the maraffa on the launch screen comes in a random suit.
+      (function () {
+        var suits = ["denari", "coppe", "spade", "bastoni"];
+        var suit = suits[Math.floor(Math.random() * suits.length)];
+        var splash = document.getElementById("splash");
+        splash.setAttribute("data-suit", suit);
+        var uses = splash.querySelectorAll("use");
+        for (var i = 0; i < uses.length; i++) uses[i].setAttribute("href", "#s-" + suit);
+      })();
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

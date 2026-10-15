@@ -22,6 +22,11 @@
   --radius: 14px;
   --radius-sm: 10px;
   --shadow: 0 1px 0 rgba(42, 31, 23, 0.06), 0 6px 18px -10px rgba(42, 31, 23, 0.35);
+  /* The tab bar is felt green, the manifest's theme_color, which is what
+     Android paints its system navigation bar with: the two read as one strip.
+     Keep it equal to theme_color in vite.config.ts. */
+  --bar: #1f4d3c;
+  --bar-ink: #f4ecdd;
   --display: "Fraunces Variable", Georgia, serif;
   --body: "Figtree Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light;
