@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
 import {
@@ -36,26 +36,21 @@ const teamName = (t: Team) => seatsOfTeam(t).map((seat) => s.value.seats[seat].n
 
 // ── Entering a hand ──────────────────────────────────────────────────────
 const points = ref<number | null>(null);
+/** Only the player di mano, who calls trumps, can declare the maraffa. */
 const maraffa = ref(false);
-const maraffaSeat = ref<Seat>(0);
-
-watch(manoSeat, () => {
-  // The maraffa belongs, nearly always, to whoever called trumps.
-  maraffaSeat.value = manoSeat.value;
-}, { immediate: true });
 
 const preview = computed<[number, number] | null>(() => {
   if (points.value === null) return null;
   const pts: [number, number] = [0, 0];
   pts[manoTeam.value] = points.value;
   pts[1 - manoTeam.value] = HAND_POINTS - points.value;
-  if (maraffa.value) pts[teamOfSeat(maraffaSeat.value)] += MARAFFA_BONUS;
+  if (maraffa.value) pts[manoTeam.value] += MARAFFA_BONUS;
   return pts;
 });
 
 function record() {
   if (points.value === null) return;
-  live.addHand(points.value, maraffa.value ? maraffaSeat.value : null);
+  live.addHand(points.value, maraffa.value);
   points.value = null;
   maraffa.value = false;
   navigator.vibrate?.(12);
@@ -218,25 +213,12 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <div class="maraffa" :class="{ on: maraffa }">
-        <button class="maraffa-toggle" :aria-pressed="maraffa" @click="maraffa = !maraffa">
-          <span class="suit">A·2·3</span>
-          <span>Maraffa <strong>+{{ MARAFFA_BONUS }}</strong></span>
-        </button>
-        <div v-if="maraffa" class="who-maraffa" role="radiogroup" aria-label="Chi aveva la maraffa">
-          <button
-            v-for="seat in [0, 1, 2, 3] as Seat[]"
-            :key="seat"
-            role="radio"
-            :aria-checked="maraffaSeat === seat"
-            :class="[{ on: maraffaSeat === seat }, `t${teamOfSeat(seat)}`]"
-            @click="maraffaSeat = seat"
-          >
-            <PlayerAvatar :player="s.seats[seat]" :size="26" />
-            <span>{{ s.seats[seat].name }}</span>
-          </button>
-        </div>
-      </div>
+      <button class="maraffa" :class="{ on: maraffa }" :aria-pressed="maraffa" @click="maraffa = !maraffa">
+        <span class="suit">A·2·3</span>
+        <span>Maraffa <strong>+{{ MARAFFA_BONUS }}</strong></span>
+        <span class="who muted">di {{ s.seats[manoSeat].name }}</span>
+        <span class="check" aria-hidden="true">{{ maraffa ? "✓" : "" }}</span>
+      </button>
 
       <div class="actions">
         <button class="btn ghost" :disabled="live.handCount === 0" @click="undo">↶ Annulla</button>
@@ -268,7 +250,7 @@ onBeforeUnmount(() => {
           <span class="n num">{{ i + 1 }}</span>
           <PlayerAvatar :player="s.seats[h.manoSeat]" :size="22" />
           <span class="by">{{ s.seats[h.manoSeat].name }}</span>
-          <span v-if="h.maraffaSeat !== null" class="m">maraffa {{ s.seats[h.maraffaSeat].name }}</span>
+          <span v-if="h.maraffa" class="m">maraffa</span>
           <span class="pts num"><span class="team-a">+{{ add[0] }}</span> <span class="team-b">+{{ add[1] }}</span></span>
         </li>
       </ol>
@@ -492,27 +474,45 @@ onBeforeUnmount(() => {
 }
 
 .maraffa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
   margin-top: 12px;
+  padding: 0 14px;
   border-radius: var(--radius);
   border: 1.5px solid var(--line);
   background: var(--card);
-  overflow: hidden;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
 }
 .maraffa.on {
   border-color: var(--gold);
   background: var(--gold-soft);
 }
-.maraffa-toggle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 52px;
-  padding: 0 14px;
-  border: 0;
-  background: transparent;
-  font-weight: 600;
-  cursor: pointer;
+.maraffa .who {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.maraffa .check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  font-weight: 800;
+}
+.maraffa.on .check {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #2a1f17;
 }
 .suit {
   padding: 3px 8px;
@@ -523,13 +523,6 @@ onBeforeUnmount(() => {
   font-weight: 800;
   font-size: 0.9rem;
 }
-.who-maraffa {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  padding: 0 10px 10px;
-}
-.who-maraffa button,
 .mano-pick button {
   display: flex;
   align-items: center;
@@ -543,13 +536,11 @@ onBeforeUnmount(() => {
   cursor: pointer;
   overflow: hidden;
 }
-.who-maraffa button span:last-child,
 .mano-pick button span:last-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.who-maraffa .on,
 .mano-pick .on {
   border-color: var(--ink);
   box-shadow: inset 0 0 0 1px var(--ink);

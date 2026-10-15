@@ -12,7 +12,10 @@
 /** Card points in one hand once the thirds are dropped: 10 from the cards, 1 for the last trick. */
 export const HAND_POINTS = 11;
 
-/** Ace, two and three of the trump suit in one hand. */
+/**
+ * Ace, two and three of the trump suit in one hand. Only the player who calls
+ * trumps can declare it, and that is always the player di mano.
+ */
 export const MARAFFA_BONUS = 3;
 
 export const SET_TARGETS = [31, 41, 51] as const;
@@ -50,30 +53,26 @@ export interface Hand {
   manoSeat: Seat;
   /** Card points per team, [A, B], maraffa bonus excluded. */
   points: [number, number];
-  /** Who held the maraffa this hand, if anyone. */
-  maraffaSeat: Seat | null;
+  /** The player di mano declared the maraffa. */
+  maraffa: boolean;
 }
 
 /**
  * Builds a hand from what the tracker asks for: the points of the team di mano.
  * The other team takes the rest of the eleven.
  */
-export function handFromManoPoints(
-  manoSeat: Seat,
-  manoPoints: number,
-  maraffaSeat: Seat | null,
-): Hand {
+export function handFromManoPoints(manoSeat: Seat, manoPoints: number, maraffa = false): Hand {
   const mano = teamOfSeat(manoSeat);
   const points: [number, number] = [0, 0];
   points[mano] = manoPoints;
   points[otherTeam(mano)] = HAND_POINTS - manoPoints;
-  return { manoSeat, points, maraffaSeat };
+  return { manoSeat, points, maraffa };
 }
 
 /** What a hand adds to each team's set score, maraffa included. */
 export function handScore(hand: Hand): [number, number] {
   const score: [number, number] = [hand.points[0], hand.points[1]];
-  if (hand.maraffaSeat !== null) score[teamOfSeat(hand.maraffaSeat)] += MARAFFA_BONUS;
+  if (hand.maraffa) score[teamOfSeat(hand.manoSeat)] += MARAFFA_BONUS;
   return score;
 }
 

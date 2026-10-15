@@ -159,7 +159,7 @@ const seat = z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]);
 const handSchema = z.object({
   manoSeat: seat,
   points: z.tuple([z.number().int().min(0).max(11), z.number().int().min(0).max(11)]),
-  maraffaSeat: seat.nullable(),
+  maraffa: z.boolean(),
 });
 const matchSchema = z.object({
   id: z.uuid("Id partita non valido"),

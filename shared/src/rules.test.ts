@@ -12,10 +12,10 @@ import {
 } from "./rules";
 
 /** Hands where the given team always takes `pts` of the eleven, lead rotating from seat 0. */
-function hands(spec: [manoPoints: number, maraffa?: Seat][], firstMano: Seat = 0): Hand[] {
+function hands(spec: [manoPoints: number, maraffa?: boolean][], firstMano: Seat = 0): Hand[] {
   let mano = firstMano;
   return spec.map(([p, m]) => {
-    const h = handFromManoPoints(mano, p, m ?? null);
+    const h = handFromManoPoints(mano, p, m ?? false);
     mano = nextManoSeat(mano);
     return h;
   });
@@ -23,13 +23,13 @@ function hands(spec: [manoPoints: number, maraffa?: Seat][], firstMano: Seat = 0
 
 describe("hands", () => {
   it("gives the other pair the rest of the eleven", () => {
-    expect(handFromManoPoints(1, 7, null).points).toEqual([4, 7]);
-    expect(handFromManoPoints(2, 7, null).points).toEqual([7, 4]);
+    expect(handFromManoPoints(1, 7).points).toEqual([4, 7]);
+    expect(handFromManoPoints(2, 7).points).toEqual([7, 4]);
   });
 
-  it("adds the maraffa to the team that held it, whoever was di mano", () => {
-    expect(handScore(handFromManoPoints(0, 6, 0))).toEqual([9, 5]);
-    expect(handScore(handFromManoPoints(0, 6, 3))).toEqual([6, 8]);
+  it("adds the maraffa to the pair di mano, the only one that can declare it", () => {
+    expect(handScore(handFromManoPoints(0, 6, true))).toEqual([9, 5]);
+    expect(handScore(handFromManoPoints(3, 6, true))).toEqual([5, 9]);
   });
 
   it("passes the lead around the table", () => {
@@ -48,12 +48,12 @@ describe("sets", () => {
     const set: SetRecord = {
       target: 31,
       hands: [
-        { manoSeat: 0, points: [5, 6], maraffaSeat: null },
-        { manoSeat: 1, points: [5, 6], maraffaSeat: null },
-        { manoSeat: 2, points: [5, 6], maraffaSeat: null },
-        { manoSeat: 3, points: [5, 6], maraffaSeat: null },
-        { manoSeat: 0, points: [5, 6], maraffaSeat: null }, // 25–30
-        { manoSeat: 1, points: [8, 3], maraffaSeat: 0 }, // 36–33
+        { manoSeat: 0, points: [5, 6], maraffa: false },
+        { manoSeat: 1, points: [5, 6], maraffa: false },
+        { manoSeat: 2, points: [5, 6], maraffa: false },
+        { manoSeat: 3, points: [5, 6], maraffa: false },
+        { manoSeat: 0, points: [5, 6], maraffa: false }, // 25–30
+        { manoSeat: 0, points: [8, 3], maraffa: true }, // 36–33
       ],
     };
     expect(scoreSet(set).winner).toBe(0);
@@ -63,22 +63,22 @@ describe("sets", () => {
     const tied: SetRecord = {
       target: 31,
       hands: [
-        { manoSeat: 0, points: [11, 0], maraffaSeat: null },
-        { manoSeat: 1, points: [0, 11], maraffaSeat: null },
-        { manoSeat: 2, points: [11, 0], maraffaSeat: null },
-        { manoSeat: 3, points: [0, 11], maraffaSeat: null }, // 22–22
-        { manoSeat: 0, points: [5, 6], maraffaSeat: 0 }, // 30–28
-        { manoSeat: 1, points: [2, 9], maraffaSeat: null }, // 32–37 → B
+        { manoSeat: 0, points: [11, 0], maraffa: false },
+        { manoSeat: 1, points: [0, 11], maraffa: false },
+        { manoSeat: 2, points: [11, 0], maraffa: false },
+        { manoSeat: 3, points: [0, 11], maraffa: false }, // 22–22
+        { manoSeat: 0, points: [5, 6], maraffa: true }, // 30–28
+        { manoSeat: 1, points: [2, 9], maraffa: false }, // 32–37 → B
       ],
     };
     expect(scoreSet({ ...tied, hands: tied.hands.slice(0, 5) }).winner).toBeNull();
     expect(scoreSet(tied).winner).toBe(1);
     const exactTie: SetRecord = {
       target: 31,
-      hands: [...tied.hands.slice(0, 4), { manoSeat: 0, points: [9, 2], maraffaSeat: 1 }], // reaches 31 exactly: 31–27 → A
+      hands: [...tied.hands.slice(0, 4), { manoSeat: 1, points: [9, 2], maraffa: true }], // B di mano +3: 31–27 → A reaches 31
     };
     expect(scoreSet(exactTie).winner).toBe(0);
-    const split = (a: number): Hand => ({ manoSeat: 0, points: [a, 11 - a], maraffaSeat: null });
+    const split = (a: number): Hand => ({ manoSeat: 0, points: [a, 11 - a], maraffa: false });
     // 27–28 after five hands, then 33–33: both past 31, level, so play on.
     const level: SetRecord = { target: 31, hands: [5, 6, 5, 6, 5, 6].map(split) };
     expect(scoreSet(level)).toEqual({ score: [33, 33], winner: null, decidedAtHand: null });
@@ -120,7 +120,7 @@ describe("matches", () => {
   });
 
   it("rejects impossible points", () => {
-    const bad: Hand = { manoSeat: 0, points: [9, 9], maraffaSeat: null };
+    const bad: Hand = { manoSeat: 0, points: [9, 9], maraffa: false };
     expect(matchProblem({ sets: [{ target: 31, hands: [bad] }] })).toMatch(/più di 11/);
   });
 });

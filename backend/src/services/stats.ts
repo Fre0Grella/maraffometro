@@ -26,7 +26,7 @@ interface HandRow {
   mano_seat: Seat;
   points_a: number;
   points_b: number;
-  maraffa_seat: Seat | null;
+  maraffa: 0 | 1;
 }
 
 function rate(s: { sets: number; setsWon: number }): number {
@@ -55,7 +55,7 @@ export async function playerStats(db: D1Database, player: PlayerRow): Promise<Pl
       .bind(id),
     db
       .prepare(
-        `SELECT h.match_id, h.mano_seat, h.points_a, h.points_b, h.maraffa_seat FROM hands h
+        `SELECT h.match_id, h.mano_seat, h.points_a, h.points_b, h.maraffa FROM hands h
            JOIN matches m ON m.id = h.match_id
           WHERE m.voided_at IS NULL
             AND h.match_id IN (SELECT match_id FROM match_players WHERE player_id = ?)`,
@@ -120,8 +120,8 @@ export async function playerStats(db: D1Database, player: PlayerRow): Promise<Pl
     const acc = h.mano_seat % 2 === me.team ? mano : fuori;
     acc.hands++;
     acc.points += myPoints;
-    if (h.maraffa_seat === me.seat) maraffas++;
-    else if (h.maraffa_seat !== null && h.maraffa_seat % 2 !== me.team) maraffasAgainst++;
+    if (h.maraffa && h.mano_seat === me.seat) maraffas++;
+    else if (h.maraffa && h.mano_seat % 2 !== me.team) maraffasAgainst++;
   }
 
   const people = await playersById(db, [...partners.keys(), ...opponents.keys()]);

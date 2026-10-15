@@ -79,7 +79,7 @@ async function doVoid() {
             <li v-for="(h, j) in match.hands[i]" :key="j">
               <span class="n num">{{ j + 1 }}</span>
               <span :class="teamOfSeat(h.manoSeat) === 0 ? 'team-a' : 'team-b'">{{ match.seats[h.manoSeat].name }}</span>
-              <span v-if="h.maraffaSeat !== null" class="m">maraffa {{ match.seats[h.maraffaSeat].name }}</span>
+              <span v-if="h.maraffa" class="m">maraffa</span>
               <span class="pts num">
                 <span class="team-a">{{ handScore(h)[0] }}</span> · <span class="team-b">{{ handScore(h)[1] }}</span>
               </span>

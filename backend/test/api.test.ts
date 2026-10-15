@@ -47,16 +47,21 @@ async function guest(cookie: string, name: string): Promise<PlayerDTO> {
   return (await res.json()) as PlayerDTO;
 }
 
-/** A set the given team wins taking 8 of the 11 every hand, with a maraffa in the first. */
+/**
+ * A set the given team wins taking 8 of the 11 every hand. Its first hand di
+ * mano declares a maraffa, the only kind there is.
+ */
 function setWonBy(team: 0 | 1, target: 31 | 41 | 51, firstMano: Seat = 0): { target: 31 | 41 | 51; hands: Hand[] } {
   const hands: Hand[] = [];
   let mano = firstMano;
   let score = 0;
+  let maraffaDone = false;
   while (score < target) {
     const winnerIsMano = mano % 2 === team;
-    const maraffa: Seat | null = hands.length === 0 ? (team === 0 ? 0 : 1) : null;
+    const maraffa = winnerIsMano && !maraffaDone;
+    maraffaDone ||= maraffa;
     hands.push(handFromManoPoints(mano, winnerIsMano ? 8 : 3, maraffa));
-    score += 8 + (maraffa !== null ? 3 : 0);
+    score += 8 + (maraffa ? 3 : 0);
     mano = nextManoSeat(mano);
   }
   return { target, hands };
@@ -148,7 +153,7 @@ describe("recording a match", () => {
   it("refuses a match that cannot have been played", async () => {
     const { cookie, me } = await login("Marco");
     const gs = [await guest(cookie, "A"), await guest(cookie, "B"), await guest(cookie, "C")];
-    const unfinished = { target: 41 as const, hands: [handFromManoPoints(0, 6, null)] };
+    const unfinished = { target: 41 as const, hands: [handFromManoPoints(0, 6)] };
     const res = await call("POST", "/matches", cookie, match([me.id, ...gs.map((g) => g.id)], [unfinished, setWonBy(0, 31)]));
     expect(res.status).toBe(400);
     expect(((await res.json()) as { error: string }).error).toMatch(/non è finito/);

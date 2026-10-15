@@ -63,7 +63,8 @@ CREATE TABLE hands (
   mano_seat INTEGER NOT NULL CHECK (mano_seat BETWEEN 0 AND 3),
   points_a INTEGER NOT NULL CHECK (points_a BETWEEN 0 AND 11),
   points_b INTEGER NOT NULL CHECK (points_b BETWEEN 0 AND 11),
-  maraffa_seat INTEGER CHECK (maraffa_seat BETWEEN 0 AND 3),
+  -- Declared by the player di mano, the only one who can: they call trumps.
+  maraffa INTEGER NOT NULL DEFAULT 0 CHECK (maraffa IN (0, 1)),
   PRIMARY KEY (match_id, set_index, hand_index)
 );
 

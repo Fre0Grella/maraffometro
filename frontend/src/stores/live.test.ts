@@ -16,16 +16,16 @@ describe("the live match", () => {
     const live = useLiveMatch();
     live.start(seats, 31);
     expect(live.state!.awaitingFirstMano).toBe(true);
-    live.addHand(6, null);
+    live.addHand(6);
     expect(live.handCount).toBe(0); // refused until asked
 
     live.setMano(2);
-    live.addHand(11, null); // a2 leads: team A di mano, takes 11
+    live.addHand(11); // a2 leads: team A di mano, takes 11
     expect(live.currentResult!.score).toEqual([11, 0]);
     expect(live.state!.manoSeat).toBe(3);
 
-    live.addHand(0, null); // b2 leads, B takes 0 → A 22
-    live.addHand(11, 0); // a1 leads, A 11 + maraffa → 36
+    live.addHand(0); // b2 leads, B takes 0 → A 22
+    live.addHand(11, true); // a1 leads, A 11 + maraffa → 36
     expect(live.setOver).toBe(true);
 
     // 1–0: the second set carries on the rotation from the next player.
@@ -38,9 +38,9 @@ describe("the live match", () => {
     const live = useLiveMatch();
     live.start(seats, 31);
     live.setMano(0);
-    for (const n of [11, 0, 11]) live.addHand(n, null); // A wins
+    for (const n of [11, 0, 11]) live.addHand(n); // A wins
     live.nextSet(31);
-    for (const n of [11, 0, 11]) live.addHand(n, null); // seats 3, 0, 1 lead: B takes 11 each
+    for (const n of [11, 0, 11]) live.addHand(n); // seats 3, 0, 1 lead: B takes 11 each
     expect(live.matchResult!.setsWon).toEqual([1, 1]);
     live.nextSet(41);
     expect(live.state!.awaitingFirstMano).toBe(true);
@@ -50,9 +50,9 @@ describe("the live match", () => {
     const live = useLiveMatch();
     live.start(seats, 31);
     live.setMano(0);
-    live.addHand(11, null);
-    live.addHand(0, null);
-    live.addHand(11, null);
+    live.addHand(11);
+    live.addHand(0);
+    live.addHand(11);
     expect(live.setOver).toBe(true);
     live.nextSet(41);
 
@@ -70,17 +70,17 @@ describe("the live match", () => {
     const live = useLiveMatch();
     live.start(seats, 31);
     live.setMano(1);
-    live.addHand(5, null);
+    live.addHand(5);
     const sub = live.toSubmission()!;
     expect(sub.seats).toEqual(["a1", "b1", "a2", "b2"]);
-    expect(sub.sets).toEqual([{ target: 31, hands: [{ manoSeat: 1, points: [6, 5], maraffaSeat: null }] }]);
+    expect(sub.sets).toEqual([{ target: 31, hands: [{ manoSeat: 1, points: [6, 5], maraffa: false }] }]);
   });
 
   it("survives a reload", () => {
     const live = useLiveMatch();
     live.start(seats, 51);
     live.setMano(3);
-    live.addHand(7, 3);
+    live.addHand(7, true);
     return Promise.resolve().then(() => {
       setActivePinia(createPinia());
       const again = useLiveMatch();

@@ -78,10 +78,10 @@ export const useLiveMatch = defineStore("live", () => {
     };
   }
 
-  function addHand(manoPoints: number, maraffaSeat: Seat | null) {
+  function addHand(manoPoints: number, maraffa = false) {
     const s = state.value;
     if (!s || setOver.value || s.awaitingFirstMano) return;
-    s.sets.at(-1)!.hands.push(handFromManoPoints(s.manoSeat, manoPoints, maraffaSeat));
+    s.sets.at(-1)!.hands.push(handFromManoPoints(s.manoSeat, manoPoints, maraffa));
     s.manoSeat = nextManoSeat(s.manoSeat);
   }
 

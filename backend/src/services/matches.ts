@@ -42,7 +42,7 @@ interface HandRow {
   mano_seat: Seat;
   points_a: number;
   points_b: number;
-  maraffa_seat: Seat | null;
+  maraffa: 0 | 1;
 }
 
 /**
@@ -55,13 +55,13 @@ export async function insertMatch(db: D1Database, match: MatchSubmitDTO, recorde
   const result = scoreMatch(match);
   const seats = match.seats.map((player, seat) => ({ seat, player }));
   const sets: { i: number; t: number; a: number; b: number; w: Team | null }[] = [];
-  const hands: { s: number; h: number; m: Seat; a: number; b: number; r: Seat | null }[] = [];
+  const hands: { s: number; h: number; m: Seat; a: number; b: number; r: 0 | 1 }[] = [];
   match.sets.forEach((set, i) => {
     if (set.hands.length === 0) return;
     const r = result.sets[i]!;
     sets.push({ i, t: set.target, a: r.score[0], b: r.score[1], w: r.winner });
     set.hands.forEach((h, j) =>
-      hands.push({ s: i, h: j, m: h.manoSeat, a: h.points[0], b: h.points[1], r: h.maraffaSeat }),
+      hands.push({ s: i, h: j, m: h.manoSeat, a: h.points[0], b: h.points[1], r: h.maraffa ? 1 : 0 }),
     );
   });
 
@@ -85,7 +85,7 @@ export async function insertMatch(db: D1Database, match: MatchSubmitDTO, recorde
       .bind(match.id, JSON.stringify(sets)),
     db
       .prepare(
-        `INSERT INTO hands (match_id, set_index, hand_index, mano_seat, points_a, points_b, maraffa_seat)
+        `INSERT INTO hands (match_id, set_index, hand_index, mano_seat, points_a, points_b, maraffa)
          SELECT ?1, json_extract(value, '$.s'), json_extract(value, '$.h'), json_extract(value, '$.m'), json_extract(value, '$.a'), json_extract(value, '$.b'), json_extract(value, '$.r')
            FROM json_each(?2)`,
       )
@@ -180,7 +180,7 @@ export async function getMatchDetail(
     bySet[h.set_index]?.push({
       manoSeat: h.mano_seat,
       points: [h.points_a, h.points_b],
-      maraffaSeat: h.maraffa_seat,
+      maraffa: h.maraffa === 1,
     });
   }
   return {
