@@ -108,6 +108,7 @@ export function newClaimCode(): string {
  * still count; signing in again with Google starts a brand-new profile.
  */
 export async function deleteAccount(db: D1Database, playerId: string): Promise<void> {
+  await db.prepare("DELETE FROM notifications WHERE player_id = ?").bind(playerId).run();
   await db
     .prepare(
       `UPDATE players SET google_sub = NULL, email = NULL, picture_url = NULL, name = 'Deleted player',

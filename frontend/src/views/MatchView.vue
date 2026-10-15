@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { handScore, teamOfSeat, type Team } from "@maraffometro/shared";
-import { useMatch, useVoidMatch } from "@/api/queries";
+import { useMatch } from "@/api/queries";
 import PlayerChip from "@/components/PlayerChip.vue";
+import DeletionPanel from "@/components/DeletionPanel.vue";
 
 const props = defineProps<{ id: string }>();
 const { data: match, isLoading, error } = useMatch(() => props.id);
-const voidMatch = useVoidMatch();
-const confirming = ref(false);
 const openSet = ref<number | null>(null);
 
 const teams = computed(() =>
@@ -27,11 +26,6 @@ const when = computed(() =>
       })
     : "",
 );
-
-async function doVoid() {
-  await voidMatch.mutateAsync(props.id);
-  confirming.value = false;
-}
 </script>
 
 <template>
@@ -42,7 +36,10 @@ async function doVoid() {
 
     <template v-else-if="match">
       <p class="when muted">{{ when }}</p>
-      <p v-if="match.voided" class="voided">Partita annullata: non conta per classifica e statistiche.</p>
+      <p v-if="match.voided" class="voided">
+        Partita eliminata<template v-if="match.deletion?.status === 'approved'"> dalla maggioranza dei giocatori</template>:
+        non conta per classifica e statistiche.
+      </p>
 
       <section class="result card">
         <div v-for="{ t, players } in teams" :key="t" class="team" :class="[`t${t}`, { won: match.winner === t }]">
@@ -90,17 +87,7 @@ async function doVoid() {
 
       <p class="muted small">Registrata da {{ match.recordedBy.name }}.</p>
 
-      <template v-if="match.canVoid">
-        <button v-if="!confirming" class="btn danger small" @click="confirming = true">Annulla questa partita</button>
-        <div v-else class="confirm card">
-          <p>La partita sparirà da classifica e statistiche per tutti. Va fatto solo se è sbagliata o finta.</p>
-          <div class="row">
-            <button class="btn danger small" :disabled="voidMatch.isPending.value" @click="doVoid">Sì, annulla</button>
-            <button class="btn ghost small" @click="confirming = false">No</button>
-          </div>
-          <p v-if="voidMatch.error.value" class="error">{{ voidMatch.error.value.message }}</p>
-        </div>
-      </template>
+      <DeletionPanel :match="match" />
     </template>
   </main>
 </template>

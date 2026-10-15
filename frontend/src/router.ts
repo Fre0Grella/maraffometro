@@ -36,6 +36,12 @@ export function createAppRouter(queryClient: QueryClient) {
       { path: "/new", name: "new", component: () => import("@/views/NewMatchView.vue"), meta: { auth: true } },
       { path: "/table", name: "live", component: () => import("@/views/LiveMatchView.vue"), meta: { auth: true } },
       { path: "/profile", name: "profile", component: () => import("@/views/ProfileView.vue"), meta: { auth: true } },
+      {
+        path: "/notifications",
+        name: "notifications",
+        component: () => import("@/views/NotificationsView.vue"),
+        meta: { auth: true },
+      },
       { path: "/privacy", name: "privacy", component: () => import("@/views/PrivacyView.vue") },
       { path: "/terms", name: "terms", component: () => import("@/views/TermsView.vue") },
       // The address first given to Google's consent screen.

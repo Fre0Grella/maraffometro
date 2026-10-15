@@ -82,8 +82,47 @@ export interface RatingChangeDTO {
 export interface MatchDetailDTO extends MatchSummaryDTO {
   hands: Hand[][];
   ratingChanges: RatingChangeDTO[];
-  /** Whether the caller may void this match. */
-  canVoid: boolean;
+  /** The latest deletion proposal, open or settled; null if there never was one. */
+  deletion: DeletionProposalDTO | null;
+  /** The caller is a registered player of the match and nothing is under way. */
+  canProposeDeletion: boolean;
+  /** The caller is an admin (ADMIN_EMAILS) and may delete it outright. */
+  canAdminVoid: boolean;
+}
+
+export type Vote = "yes" | "no";
+
+export interface DeletionProposalDTO {
+  id: string;
+  status: "open" | "approved" | "rejected";
+  proposedBy: PlayerDTO;
+  createdAt: string;
+  yes: number;
+  no: number;
+  /** Registered players of the match when the proposal opened. */
+  eligible: number;
+  /** Yes votes it takes: a strict majority of `eligible`. */
+  needed: number;
+  myVote: Vote | null;
+  /** The caller is one of the voters and the proposal is still open. */
+  canVote: boolean;
+}
+
+export type NotificationType = "deletion_proposed" | "match_deleted" | "deletion_rejected";
+
+export interface NotificationDTO {
+  id: string;
+  type: NotificationType;
+  createdAt: string;
+  read: boolean;
+  /** Who caused it, e.g. the player proposing a deletion. */
+  actor: PlayerDTO | null;
+  match: { id: string; playedAt: string } | null;
+}
+
+export interface NotificationsDTO {
+  unread: number;
+  items: NotificationDTO[];
 }
 
 export interface MatchSubmitDTO {

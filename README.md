@@ -95,9 +95,12 @@ a new account.
   4 of denari again. Both can be overridden at the table.
 - A match is any number of sets. It can be stopped at any time: finished sets
   count, an unfinished one only feeds the statistics. Level sets = draw.
-- Only someone seated can record a match; anyone seated, the recorder, or an
-  admin (`ADMIN_EMAILS`) can void it. Sign-up is open, so the admin override is
-  how fake matches get removed.
+- Only someone seated can record a match. Deleting one is a vote: a registered
+  player of the match proposes it, the others are notified (the bell, polled
+  with a plain GET), and it is deleted only if a strict majority of the
+  match's registered players vote yes. The rating changes recorded for later
+  matches stay as they were; current ratings are refitted without it. Admins
+  (`ADMIN_EMAILS`) can still delete outright, for fake matches.
 
 ## License
 

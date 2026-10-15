@@ -7,6 +7,7 @@ import {
   type MatchDetailDTO,
   type MatchSubmitDTO,
   type MeDTO,
+  type NotificationsDTO,
   type PlayerDTO,
   type PlayerStatsDTO,
   type Seat,
@@ -107,7 +108,7 @@ describe("recording a match", () => {
     expect(detail.winner).toBe(0);
     expect(detail.hands).toHaveLength(3);
     expect(detail.ratingChanges).toHaveLength(4);
-    expect(detail.canVoid).toBe(true);
+    expect(detail.canProposeDeletion).toBe(true);
   });
 
   it("computes the player's stats", async () => {
@@ -168,7 +169,7 @@ describe("recording a match", () => {
     expect((await call("POST", "/players/guests", undefined, { name: "X" })).status).toBe(401);
   });
 
-  it("drops a voided match from the ratings", async () => {
+  it("deletes at once when the proposer is the only registered player", async () => {
     const { cookie, me } = await login("Marco");
     const gs = [await guest(cookie, "A"), await guest(cookie, "B"), await guest(cookie, "C")];
     const m = match([me.id, ...gs.map((g) => g.id)], [setWonBy(0, 31)]);
@@ -176,9 +177,98 @@ describe("recording a match", () => {
     expect(((await (await call("GET", "/leaderboard")).json()) as unknown[]).length).toBe(4);
 
     const { cookie: stranger } = await login("Intruso");
-    expect((await call("POST", `/matches/${m.id}/void`, stranger)).status).toBe(403);
-    expect((await call("POST", `/matches/${m.id}/void`, cookie)).status).toBe(200);
+    expect((await call("POST", `/matches/${m.id}/deletion`, stranger)).status).toBe(403);
+    // Direct voiding is for admins only now.
+    expect((await call("POST", `/matches/${m.id}/void`, cookie)).status).toBe(403);
+
+    const res = await call("POST", `/matches/${m.id}/deletion`, cookie);
+    expect(await res.json()).toEqual({ status: "approved" });
     expect(((await (await call("GET", "/leaderboard")).json()) as unknown[]).length).toBe(0);
+  });
+});
+
+describe("deleting a match by vote", () => {
+  /** Four registered players around one table, and a recorded match. */
+  async function table() {
+    const players = [await login("Marco"), await login("Nico"), await login("Ale"), await login("Bea")];
+    const m = match(players.map((p) => p.me.id), [setWonBy(0, 31)]);
+    expect((await call("POST", "/matches", players[0]!.cookie, m)).status).toBe(201);
+    return { players, m };
+  }
+
+  const detail = async (id: string, cookie?: string) =>
+    (await (await call("GET", `/matches/${id}`, cookie)).json()) as MatchDetailDTO;
+  const bell = async (cookie: string) => (await (await call("GET", "/notifications", cookie)).json()) as NotificationsDTO;
+
+  it("needs a majority of the registered players", async () => {
+    const { players, m } = await table();
+    const [marco, nico, ale] = players;
+
+    expect((await call("POST", `/matches/${m.id}/deletion`, marco!.cookie)).status).toBe(201);
+    expect((await call("POST", `/matches/${m.id}/deletion`, nico!.cookie)).status).toBe(409); // one at a time
+
+    let d = await detail(m.id, nico!.cookie);
+    expect(d.deletion).toMatchObject({ status: "open", yes: 1, no: 0, eligible: 4, needed: 3, myVote: null, canVote: true });
+    expect(d.canProposeDeletion).toBe(false);
+
+    // The others were told, the proposer wasn't.
+    expect((await bell(nico!.cookie)).unread).toBe(1);
+    expect((await bell(nico!.cookie)).items[0]).toMatchObject({ type: "deletion_proposed", actor: { id: marco!.me.id }, match: { id: m.id } });
+    expect((await bell(marco!.cookie)).unread).toBe(0);
+
+    await call("POST", `/matches/${m.id}/deletion/vote`, nico!.cookie, { vote: "yes" });
+    expect((await detail(m.id)).voided).toBe(false); // 2 of 3 needed
+    const last = await call("POST", `/matches/${m.id}/deletion/vote`, ale!.cookie, { vote: "yes" });
+    expect(await last.json()).toEqual({ status: "approved" });
+
+    d = await detail(m.id, marco!.cookie);
+    expect(d.voided).toBe(true);
+    expect(d.deletion?.status).toBe("approved");
+    expect((await bell(marco!.cookie)).items[0]?.type).toBe("match_deleted");
+  });
+
+  it("is rejected once yes can no longer win", async () => {
+    const { players, m } = await table();
+    const [marco, nico, ale] = players;
+    await call("POST", `/matches/${m.id}/deletion`, marco!.cookie);
+    await call("POST", `/matches/${m.id}/deletion/vote`, nico!.cookie, { vote: "no" });
+    expect((await detail(m.id)).deletion?.status).toBe("open"); // 1 yes, 1 no, 2 to vote
+    const res = await call("POST", `/matches/${m.id}/deletion/vote`, ale!.cookie, { vote: "no" });
+    expect(await res.json()).toEqual({ status: "rejected" });
+    expect((await detail(m.id)).voided).toBe(false);
+    expect((await bell(marco!.cookie)).items[0]?.type).toBe("deletion_rejected");
+    // A new proposal can be made after a rejected one.
+    expect((await detail(m.id, nico!.cookie)).canProposeDeletion).toBe(true);
+  });
+
+  it("only lets the match's players vote", async () => {
+    const { players, m } = await table();
+    await call("POST", `/matches/${m.id}/deletion`, players[0]!.cookie);
+    const stranger = await login("Intruso");
+    expect((await call("POST", `/matches/${m.id}/deletion/vote`, stranger.cookie, { vote: "yes" })).status).toBe(403);
+  });
+
+  it("leaves the rating changes of later matches as they were", async () => {
+    const { players, m } = await table();
+    const later = match(players.map((p) => p.me.id), [setWonBy(1, 31)]);
+    await call("POST", "/matches", players[0]!.cookie, later);
+    const before = (await detail(later.id)).ratingChanges;
+
+    await call("POST", `/matches/${m.id}/deletion`, players[0]!.cookie);
+    await call("POST", `/matches/${m.id}/deletion/vote`, players[1]!.cookie, { vote: "yes" });
+    await call("POST", `/matches/${m.id}/deletion/vote`, players[2]!.cookie, { vote: "yes" });
+    expect((await detail(m.id)).voided).toBe(true);
+    expect((await detail(later.id)).ratingChanges).toEqual(before);
+  });
+
+  it("marks notifications read", async () => {
+    const { players, m } = await table();
+    await call("POST", `/matches/${m.id}/deletion`, players[0]!.cookie);
+    const nico = players[1]!;
+    const { items } = await bell(nico.cookie);
+    await call("POST", "/notifications/read", nico.cookie, { ids: [items[0]!.id] });
+    expect((await bell(nico.cookie)).unread).toBe(0);
+    expect((await bell(nico.cookie)).items[0]?.read).toBe(true);
   });
 });
 
@@ -192,7 +282,7 @@ describe("admins", () => {
 
     const boss = await login("Boss");
     const detail = (await (await call("GET", `/matches/${m.id}`, boss.cookie)).json()) as MatchDetailDTO;
-    expect(detail.canVoid).toBe(true);
+    expect(detail.canAdminVoid).toBe(true);
     expect((await call("POST", `/matches/${m.id}/void`, boss.cookie)).status).toBe(200);
   });
 });

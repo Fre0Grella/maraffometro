@@ -6,6 +6,7 @@ import type {
   MatchDetailDTO,
   MatchSummaryDTO,
   MeDTO,
+  NotificationsDTO,
   PlayerDTO,
   PlayerStatsDTO,
   PlayerUpdateDTO,
@@ -20,6 +21,7 @@ export const keys = {
   matches: (player?: string) => ["matches", player ?? "all"] as const,
   match: (id: string) => ["match", id] as const,
   stats: (id: string) => ["stats", id] as const,
+  notifications: ["notifications"] as const,
 };
 
 /** The signed-in player, or null when nobody is. */
@@ -112,6 +114,54 @@ export function useClaim() {
   });
 }
 
+/**
+ * The bell. A plain GET, polled every minute and whenever the app comes back
+ * to the front; only for a signed-in player.
+ */
+export function useNotifications(enabled: MaybeRefOrGetter<boolean>) {
+  return useQuery({
+    queryKey: keys.notifications,
+    queryFn: () => api<NotificationsDTO>("/notifications"),
+    enabled: computed(() => toValue(enabled)),
+    refetchInterval: 60_000,
+    staleTime: 15_000,
+  });
+}
+
+export function useMarkNotificationsRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids?: string[]) => api<{ ok: true }>("/notifications/read", { method: "POST", body: { ids } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.notifications }),
+  });
+}
+
+/** Opens a vote on deleting a match; the caller's vote counts as yes. */
+export function useProposeDeletion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (matchId: string) =>
+      api<{ status: "open" | "approved" | "rejected" }>(`/matches/${matchId}/deletion`, { method: "POST" }),
+    onSuccess: () => invalidateResults(qc),
+  });
+}
+
+export function useVoteDeletion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ matchId, vote }: { matchId: string; vote: "yes" | "no" }) =>
+      api<{ status: "open" | "approved" | "rejected" }>(`/matches/${matchId}/deletion/vote`, {
+        method: "POST",
+        body: { vote },
+      }),
+    onSuccess: () => {
+      invalidateResults(qc);
+      qc.invalidateQueries({ queryKey: keys.notifications });
+    },
+  });
+}
+
+/** Admins only: deletes a match without a vote. */
 export function useVoidMatch() {
   const qc = useQueryClient();
   return useMutation({

@@ -9,6 +9,7 @@ import {
   type Team,
 } from "@maraffometro/shared";
 import { playersById, toPlayerDTO, type PlayerRow } from "./players";
+import { eligibleVoters, latestProposal } from "./deletions";
 
 interface MatchRow {
   id: string;
@@ -183,22 +184,19 @@ export async function getMatchDetail(
       maraffa: h.maraffa === 1,
     });
   }
+  const deletion = await latestProposal(db, id, viewerId);
   return {
     ...summary!,
     hands: bySet,
     ratingChanges: (changes!.results as { player_id: string; rating_before: number; rating_after: number }[]).map(
       (c) => ({ playerId: c.player_id, before: Math.round(c.rating_before), after: Math.round(c.rating_after) }),
     ),
-    canVoid: viewerId !== null && !summary!.voided && (viewerIsAdmin || (await canVoid(db, m, viewerId))),
+    deletion,
+    canProposeDeletion:
+      viewerId !== null &&
+      !summary!.voided &&
+      deletion?.status !== "open" &&
+      (await eligibleVoters(db, id)).includes(viewerId),
+    canAdminVoid: viewerIsAdmin && !summary!.voided,
   };
-}
-
-/** Anyone who sat at the table, or whoever recorded the match, may void it. */
-export async function canVoid(db: D1Database, m: MatchRow, playerId: string): Promise<boolean> {
-  if (m.recorded_by === playerId) return true;
-  const seated = await db
-    .prepare("SELECT 1 FROM match_players WHERE match_id = ? AND player_id = ?")
-    .bind(m.id, playerId)
-    .first();
-  return seated !== null;
 }

@@ -16,7 +16,9 @@ import {
   toPlayerDTO,
   type PlayerRow,
 } from "../services/players";
-import { canVoid, getMatchDetail, getMatchRow, insertMatch, listMatches } from "../services/matches";
+import { getMatchDetail, getMatchRow, insertMatch, listMatches } from "../services/matches";
+import { castVote, proposeDeletion } from "../services/deletions";
+import { listNotifications, markRead } from "../services/notifications";
 import { leaderboard, recomputeRatings } from "../services/ratings";
 import { playerStats } from "../services/stats";
 
@@ -233,13 +235,34 @@ api.post("/matches", requireAuth, zValidator("json", matchSchema, invalid), asyn
   return c.json({ id: match.id, duplicate: false }, 201);
 });
 
+/**
+ * Proposes deleting a match. It is deleted only if a majority of its
+ * registered players agree; the proposer's own vote counts as yes, so a match
+ * with a single registered player is deleted at once.
+ */
+api.post("/matches/:id/deletion", requireAuth, async (c) => {
+  const result = await proposeDeletion(c.env.db, c.req.param("id"), c.var.playerId!);
+  if (!result.ok) return fail(c, result.error);
+  return c.json({ status: result.status }, 201);
+});
+
+api.post(
+  "/matches/:id/deletion/vote",
+  requireAuth,
+  zValidator("json", z.object({ vote: z.enum(["yes", "no"]) }), invalid),
+  async (c) => {
+    const result = await castVote(c.env.db, c.req.param("id"), c.var.playerId!, c.req.valid("json").vote);
+    if (!result.ok) return fail(c, result.error);
+    return c.json({ status: result.status });
+  },
+);
+
+/** Admins (ADMIN_EMAILS) can still delete outright, for fake matches no vote would reach. */
 api.post("/matches/:id/void", requireAuth, async (c) => {
   const m = await getMatchRow(c.env.db, c.req.param("id"));
   if (!m) return fail(c, "match_not_found");
   if (m.voided_at) return c.json({ ok: true });
-  if (!(await canVoid(c.env.db, m, c.var.playerId!)) && !(await isAdmin(c))) {
-    return fail(c, "void_forbidden");
-  }
+  if (!(await isAdmin(c))) return fail(c, "admin_only");
   await c.env.db
     .prepare("UPDATE matches SET voided_at = ?, voided_by = ? WHERE id = ?")
     .bind(new Date().toISOString(), c.var.playerId, m.id)
@@ -247,5 +270,20 @@ api.post("/matches/:id/void", requireAuth, async (c) => {
   await recomputeRatings(c.env.db);
   return c.json({ ok: true });
 });
+
+// ── Notifications ──────────────────────────────────────────────────────────
+
+/** The bell: polled by the app, newest first, with the unread count. */
+api.get("/notifications", requireAuth, async (c) => c.json(await listNotifications(c.env.db, c.var.playerId!)));
+
+api.post(
+  "/notifications/read",
+  requireAuth,
+  zValidator("json", z.object({ ids: z.array(z.string()).max(100).optional() }), invalid),
+  async (c) => {
+    await markRead(c.env.db, c.var.playerId!, c.req.valid("json").ids);
+    return c.json({ ok: true });
+  },
+);
 
 export default api;
