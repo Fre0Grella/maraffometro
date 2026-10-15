@@ -1,0 +1,39 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "maraffometro-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  // Production. `scripts/setup-cloudflare.sh` creates the database and writes
+  // its id here; until then the placeholder only blocks remote commands.
+  "d1_databases": [
+    {
+      "binding": "db",
+      "database_name": "maraffometro-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production",
+    "FRONTEND_URL": "https://maraffometro.pages.dev"
+  },
+  "env": {
+    // `npm run dev`: a local SQLite file under .wrangler/, no Cloudflare
+    // account needed. Secrets come from .dev.vars (see .dev.vars.example).
+    "local": {
+      "d1_databases": [
+        {
+          "binding": "db",
+          "database_name": "db",
+          "database_id": "local",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "vars": {
+        "ENVIRONMENT": "local",
+        "FRONTEND_URL": "http://localhost:5173"
+      }
+    }
+  }
+}

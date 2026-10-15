@@ -1,0 +1,5 @@
+# Copy to .dev.vars for `npm run dev`. Google is optional locally: without it,
+# use the "Entra in locale" button, which signs you in as a demo player.
+JWT_SECRET=change-me-to-a-long-random-string
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=

@@ -1,0 +1,26 @@
+{
+  "name": "@maraffometro/backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --env local",
+    "deploy": "wrangler deploy --minify",
+    "db:migrate:local": "wrangler d1 migrations apply db --local --env local",
+    "db:migrate:remote": "wrangler d1 migrations apply maraffometro-db --remote",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "test": "vitest run",
+    "bench": "vitest bench --run"
+  },
+  "dependencies": {
+    "@hono/oauth-providers": "^0.9.0",
+    "@hono/zod-validator": "^0.9.1",
+    "@maraffometro/shared": "*",
+    "hono": "^4.12.8",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260423.1",
+    "wrangler": "^4.80.0"
+  }
+}
