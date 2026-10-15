@@ -12,6 +12,8 @@ export interface PlayerDTO {
   motto: string;
   /** A profile someone added for a friend who has not signed in yet. */
   isGuest: boolean;
+  /** The player deleted their account; only their seat in past matches remains. */
+  deleted: boolean;
 }
 
 export interface MeDTO extends PlayerDTO {

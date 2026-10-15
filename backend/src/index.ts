@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { AppEnv } from "./env";
 import auth, { session } from "./routes/auth";
 import api from "./routes/api";
+import { fail } from "./routes/errors";
 
 /**
  * The Worker behind maraffometro. It is only ever reached through the Pages
@@ -16,7 +17,7 @@ export function createApp() {
   app.route("/api/v1", api);
   app.onError((err, c) => {
     console.error(err);
-    return c.json({ error: "Errore del server" }, 500);
+    return fail(c, "server_error");
   });
   return app;
 }

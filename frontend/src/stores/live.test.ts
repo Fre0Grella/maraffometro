@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from "pinia";
 import type { PlayerDTO } from "@maraffometro/shared";
 import { useLiveMatch } from "./live";
 
-const p = (id: string): PlayerDTO => ({ id, name: id, emoji: "🃏", color: "#000000", motto: "", isGuest: false });
+const p = (id: string): PlayerDTO => ({ id, name: id, emoji: "🃏", color: "#000000", motto: "", isGuest: false, deleted: false });
 const seats = [p("a1"), p("b1"), p("a2"), p("b2")] as [PlayerDTO, PlayerDTO, PlayerDTO, PlayerDTO];
 
 describe("the live match", () => {

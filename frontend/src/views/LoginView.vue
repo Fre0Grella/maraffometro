@@ -9,7 +9,7 @@ const { data: me } = useMe();
 watchEffect(() => {
   if (me.value) router.replace("/");
 });
-const failed = computed(() => route.query.errore !== undefined);
+const failed = computed(() => route.query.error !== undefined);
 /** The demo sign-in only exists on a local Worker; the button only exists in a dev build. */
 const devLogin = import.meta.env.DEV;
 const devName = ref("Marco");
@@ -46,7 +46,7 @@ const devName = ref("Marco");
     </form>
 
     <p class="legal muted">
-      Accedendo accetti i <RouterLink to="/termini">termini d'uso</RouterLink> e l'<RouterLink to="/privacy"
+      Accedendo accetti i <RouterLink to="/terms">termini d'uso</RouterLink> e l'<RouterLink to="/privacy"
         >informativa privacy</RouterLink
       >.
     </p>

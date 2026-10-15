@@ -52,7 +52,7 @@
     <h2>I tuoi diritti</h2>
     <p>
       Puoi modificare il profilo quando vuoi ed <strong>eliminare l'account</strong> da
-      <RouterLink to="/profilo">Profilo</RouterLink>: nome, email, foto e motto vengono cancellati e il tuo posto nelle
+      <RouterLink to="/profile">Profilo</RouterLink>: nome, email, foto e motto vengono cancellati e il tuo posto nelle
       partite già giocate diventa anonimo ("Ex giocatore"), perché quelle partite fanno parte della storia degli altri
       giocatori. Per qualsiasi altra richiesta (accesso, rettifica, rimozione di un profilo ospite) apri una
       segnalazione su

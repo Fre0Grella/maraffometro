@@ -138,26 +138,26 @@ export function scoreMatch(match: MatchRecord): MatchResult {
  * may be unfinished, which is how a match cut short by the end of lunch looks.
  */
 export function matchProblem(match: MatchRecord): string | null {
-  if (match.sets.length === 0) return "la partita non ha set";
+  if (match.sets.length === 0) return "the match has no sets";
   const handCount = match.sets.reduce((n, s) => n + s.hands.length, 0);
-  if (handCount === 0) return "la partita non ha mani";
+  if (handCount === 0) return "the match has no hands";
 
   for (let i = 0; i < match.sets.length; i++) {
     const set = match.sets[i]!;
-    if (!isSetTarget(set.target)) return `set ${i + 1}: obiettivo non valido`;
+    if (!isSetTarget(set.target)) return `set ${i + 1}: invalid target`;
     for (const [j, hand] of set.hands.entries()) {
-      const where = `set ${i + 1}, mano ${j + 1}`;
+      const where = `set ${i + 1}, hand ${j + 1}`;
       for (const p of hand.points) {
-        if (!Number.isInteger(p) || p < 0 || p > HAND_POINTS) return `${where}: punti non validi`;
+        if (!Number.isInteger(p) || p < 0 || p > HAND_POINTS) return `${where}: invalid points`;
       }
-      if (hand.points[0] + hand.points[1] > HAND_POINTS) return `${where}: più di ${HAND_POINTS} punti`;
+      if (hand.points[0] + hand.points[1] > HAND_POINTS) return `${where}: more than ${HAND_POINTS} points`;
     }
     const result = scoreSet(set);
     const isLast = i === match.sets.length - 1;
     if (result.decidedAtHand !== null && result.decidedAtHand !== set.hands.length) {
-      return `set ${i + 1}: mani registrate dopo la fine del set`;
+      return `set ${i + 1}: hands recorded after the set was over`;
     }
-    if (!isLast && result.winner === null) return `set ${i + 1}: non è finito`;
+    if (!isLast && result.winner === null) return `set ${i + 1}: not finished`;
   }
   return null;
 }

@@ -36,7 +36,7 @@ async function doVoid() {
 
 <template>
   <main class="page">
-    <RouterLink to="/partite" class="back muted">← Partite</RouterLink>
+    <RouterLink to="/matches" class="back muted">← Partite</RouterLink>
     <p v-if="isLoading" class="muted">Carico…</p>
     <p v-else-if="error" class="error">{{ error.message }}</p>
 

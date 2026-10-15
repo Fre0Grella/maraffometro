@@ -108,7 +108,7 @@ const partnerLine = (p: PartnerStatDTO) => `${p.setsWon} su ${p.sets} set · ${p
       </div>
 
       <div v-if="isMe" class="mine">
-        <RouterLink to="/profilo" class="btn ghost block">Modifica il tuo profilo</RouterLink>
+        <RouterLink to="/profile" class="btn ghost block">Modifica il tuo profilo</RouterLink>
       </div>
 
       <section v-if="stats.player.isGuest && me" class="claim card">

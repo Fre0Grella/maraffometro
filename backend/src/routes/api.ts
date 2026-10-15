@@ -4,6 +4,7 @@ import { z } from "zod";
 import { matchProblem, type ClaimCodeDTO, type MatchSubmitDTO } from "@maraffometro/shared";
 import type { AppEnv } from "../env";
 import { clearSession, requireAuth } from "./auth";
+import { fail } from "./errors";
 import {
   CLAIM_CODE_DAYS,
   defaultLook,
@@ -29,12 +30,14 @@ async function isAdmin(c: Context<AppEnv>): Promise<boolean> {
   return !!me?.email && admins.includes(me.email.toLowerCase());
 }
 
-/** Turns a zod failure into the same `{ error }` shape every other refusal has. */
+/** Turns a zod failure into the same `{ error, message }` shape every other refusal has. */
 const invalid = (
-  result: { success: boolean; error?: { issues: readonly { message: string }[] } },
-  c: { json: (b: unknown, s: 400) => Response },
+  result: { success: boolean; error?: { issues: readonly { message: string; path: readonly PropertyKey[] }[] } },
+  c: Context,
 ) => {
-  if (!result.success) return c.json({ error: result.error?.issues[0]?.message ?? "Richiesta non valida" }, 400);
+  if (result.success) return;
+  const issue = result.error?.issues[0];
+  return fail(c, "invalid_request", issue ? `${issue.path.join(".") || "body"}: ${issue.message}` : undefined);
 };
 
 // ── Session ────────────────────────────────────────────────────────────────
@@ -44,7 +47,7 @@ api.get("/me", requireAuth, async (c) => {
   if (!me || me.deleted_at) {
     // The player was removed (or the database reset) under a still-valid cookie.
     clearSession(c);
-    return c.json({ error: "Devi accedere" }, 401);
+    return fail(c, "unauthenticated");
   }
   return c.json(toMeDTO(me));
 });
@@ -62,10 +65,10 @@ api.delete("/me", requireAuth, async (c) => {
 });
 
 const profileSchema = z.object({
-  name: z.string().trim().min(1, "Il nome non può essere vuoto").max(30, "Nome troppo lungo"),
+  name: z.string().trim().min(1).max(30),
   emoji: z.string().trim().min(1).max(16),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Colore non valido"),
-  motto: z.string().trim().max(80, "Motto troppo lungo"),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "expected a #rrggbb colour"),
+  motto: z.string().trim().max(80),
 });
 
 api.put("/me", requireAuth, zValidator("json", profileSchema, invalid), async (c) => {
@@ -81,7 +84,7 @@ api.put("/me", requireAuth, zValidator("json", profileSchema, invalid), async (c
 api.post(
   "/me/claim",
   requireAuth,
-  zValidator("json", z.object({ code: z.string().trim().toUpperCase().length(6, "Il codice ha 6 caratteri") }), invalid),
+  zValidator("json", z.object({ code: z.string().trim().toUpperCase().length(6) }), invalid),
   async (c) => {
     const { code } = c.req.valid("json");
     const guest = await c.env.db
@@ -89,11 +92,11 @@ api.post(
       .bind(code)
       .first<PlayerRow>();
     if (!guest || !guest.claim_code_expires_at || guest.claim_code_expires_at < new Date().toISOString()) {
-      return c.json({ error: "Codice non valido o scaduto" }, 404);
+      return fail(c, "claim_code_invalid");
     }
     const outcome = await mergeGuestInto(c.env.db, guest.id, c.var.playerId!);
     if (outcome === "overlap") {
-      return c.json({ error: "Hai giocato nella stessa partita di questo ospite: non può essere te" }, 409);
+      return fail(c, "claim_overlap");
     }
     await recomputeRatings(c.env.db);
     return c.json({ claimed: toPlayerDTO(guest) });
@@ -125,7 +128,7 @@ api.post(
 
 api.get("/players/:id/stats", async (c) => {
   const player = await getPlayer(c.env.db, c.req.param("id"));
-  if (!player) return c.json({ error: "Giocatore non trovato" }, 404);
+  if (!player) return fail(c, "player_not_found");
   return c.json(await playerStats(c.env.db, player));
 });
 
@@ -136,7 +139,7 @@ api.get("/players/:id/stats", async (c) => {
  */
 api.post("/players/:id/claim-code", requireAuth, async (c) => {
   const guest = await getPlayer(c.env.db, c.req.param("id"));
-  if (!guest || guest.google_sub !== null || guest.deleted_at) return c.json({ error: "Non è un profilo ospite" }, 404);
+  if (!guest || guest.google_sub !== null || guest.deleted_at) return fail(c, "not_a_guest");
   const me = c.var.playerId!;
   const playedWith = await c.env.db
     .prepare(
@@ -146,7 +149,7 @@ api.post("/players/:id/claim-code", requireAuth, async (c) => {
     .bind(guest.id, me)
     .first();
   if (guest.created_by !== me && !playedWith) {
-    return c.json({ error: "Solo chi ha creato l'ospite o ci ha giocato può generare il codice" }, 403);
+    return fail(c, "claim_code_forbidden");
   }
   const code = newClaimCode();
   const expiresAt = new Date(Date.now() + CLAIM_CODE_DAYS * 86_400_000).toISOString();
@@ -170,7 +173,7 @@ const handSchema = z.object({
   maraffa: z.boolean(),
 });
 const matchSchema = z.object({
-  id: z.uuid("Id partita non valido"),
+  id: z.uuid(),
   playedAt: z.iso.datetime({ offset: true }),
   seats: z.tuple([z.string(), z.string(), z.string(), z.string()]),
   sets: z
@@ -192,7 +195,7 @@ api.get("/matches", async (c) => {
 
 api.get("/matches/:id", async (c) => {
   const match = await getMatchDetail(c.env.db, c.req.param("id"), c.var.playerId, await isAdmin(c));
-  if (!match) return c.json({ error: "Partita non trovata" }, 404);
+  if (!match) return fail(c, "match_not_found");
   return c.json(match);
 });
 
@@ -208,22 +211,22 @@ api.post("/matches", requireAuth, zValidator("json", matchSchema, invalid), asyn
   const existing = await getMatchRow(c.env.db, match.id);
   if (existing) {
     if (existing.recorded_by === me) return c.json({ id: match.id, duplicate: true });
-    return c.json({ error: "Partita già registrata" }, 409);
+    return fail(c, "match_exists");
   }
 
-  if (new Set(match.seats).size !== 4) return c.json({ error: "Servono quattro giocatori diversi" }, 400);
+  if (new Set(match.seats).size !== 4) return fail(c, "duplicate_players");
   if (!match.seats.includes(me)) {
-    return c.json({ error: "Puoi registrare solo le partite in cui hai giocato" }, 403);
+    return fail(c, "not_seated");
   }
-  if (Date.parse(match.playedAt) > Date.now() + 86_400_000) return c.json({ error: "Data nel futuro" }, 400);
+  if (Date.parse(match.playedAt) > Date.now() + 86_400_000) return fail(c, "future_date");
   const problem = matchProblem(match);
-  if (problem) return c.json({ error: problem }, 400);
+  if (problem) return fail(c, "invalid_match", problem);
 
   const { results: known } = await c.env.db
     .prepare(`SELECT id FROM players WHERE id IN (?, ?, ?, ?)`)
     .bind(...match.seats)
     .all<{ id: string }>();
-  if (known.length !== 4) return c.json({ error: "Giocatore sconosciuto" }, 400);
+  if (known.length !== 4) return fail(c, "unknown_player");
 
   await insertMatch(c.env.db, match, me);
   await recomputeRatings(c.env.db, { id: match.id, players: [...match.seats] });
@@ -232,10 +235,10 @@ api.post("/matches", requireAuth, zValidator("json", matchSchema, invalid), asyn
 
 api.post("/matches/:id/void", requireAuth, async (c) => {
   const m = await getMatchRow(c.env.db, c.req.param("id"));
-  if (!m) return c.json({ error: "Partita non trovata" }, 404);
+  if (!m) return fail(c, "match_not_found");
   if (m.voided_at) return c.json({ ok: true });
   if (!(await canVoid(c.env.db, m, c.var.playerId!)) && !(await isAdmin(c))) {
-    return c.json({ error: "Solo chi ha giocato o registrato la partita (o un admin) può annullarla" }, 403);
+    return fail(c, "void_forbidden");
   }
   await c.env.db
     .prepare("UPDATE matches SET voided_at = ?, voided_by = ? WHERE id = ?")

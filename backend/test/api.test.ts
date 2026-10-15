@@ -156,7 +156,9 @@ describe("recording a match", () => {
     const unfinished = { target: 41 as const, hands: [handFromManoPoints(0, 6)] };
     const res = await call("POST", "/matches", cookie, match([me.id, ...gs.map((g) => g.id)], [unfinished, setWonBy(0, 31)]));
     expect(res.status).toBe(400);
-    expect(((await res.json()) as { error: string }).error).toMatch(/non è finito/);
+    const body = (await res.json()) as { error: string; message: string };
+    expect(body.error).toBe("invalid_match");
+    expect(body.message).toMatch(/not finished/);
   });
 
   it("requires a session to write", async () => {
@@ -247,7 +249,8 @@ describe("deleting an account", () => {
     expect((await call("GET", "/me", marco.cookie)).status).toBe(401);
 
     const detail = (await (await call("GET", `/matches/${m.id}`)).json()) as MatchDetailDTO;
-    expect(detail.seats[0].name).toBe("Ex giocatore");
+    expect(detail.seats[0].deleted).toBe(true);
+    expect(detail.seats[0].name).toBe("Deleted player");
     const board = (await (await call("GET", "/leaderboard")).json()) as LeaderboardEntryDTO[];
     expect(board.map((e) => e.player.id)).not.toContain(marco.me.id);
     const players = (await (await call("GET", "/players")).json()) as PlayerDTO[];

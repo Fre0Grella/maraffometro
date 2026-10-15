@@ -51,7 +51,7 @@ function rotatePairs() {
 function start() {
   if (!ready.value) return;
   live.start(seats.value as [PlayerDTO, PlayerDTO, PlayerDTO, PlayerDTO], target.value);
-  router.replace("/al-tavolo");
+  router.replace("/table");
 }
 </script>
 
@@ -62,7 +62,7 @@ function start() {
     <section v-if="live.active" class="resume card">
       <p><strong>C'è già una partita in corso</strong> su questo telefono.</p>
       <div class="row">
-        <RouterLink to="/al-tavolo" class="btn small">Riprendi</RouterLink>
+        <RouterLink to="/table" class="btn small">Riprendi</RouterLink>
         <button class="btn small danger" @click="live.discard()">Scartala</button>
       </div>
     </section>

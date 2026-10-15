@@ -5,6 +5,7 @@ import { createMiddleware } from "hono/factory";
 import { sign, verify } from "hono/jwt";
 import type { AppEnv } from "../env";
 import { upsertGoogleUser } from "../services/players";
+import { fail } from "./errors";
 
 const COOKIE = "session_token";
 const SESSION_DAYS = 30;
@@ -60,7 +61,7 @@ export function clearSession(c: Context<AppEnv>): void {
 }
 
 export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
-  if (!c.var.playerId) return c.json({ error: "Devi accedere" }, 401);
+  if (!c.var.playerId) return fail(c, "unauthenticated");
   await next();
 });
 
@@ -68,7 +69,7 @@ const auth = new Hono<AppEnv>();
 
 auth.use("/google", async (c, next) => {
   if (!c.env.GOOGLE_CLIENT_ID || !c.env.GOOGLE_CLIENT_SECRET) {
-    return c.json({ error: "Google sign-in is not configured (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET)" }, 500);
+    return fail(c, "google_not_configured");
   }
   return googleAuth({
     client_id: c.env.GOOGLE_CLIENT_ID,
@@ -81,7 +82,7 @@ auth.use("/google", async (c, next) => {
 auth.get("/google", async (c) => {
   const frontend = resolveFrontendUrl(c.env);
   const user = c.get("user-google");
-  if (!user?.id || !c.env.JWT_SECRET) return c.redirect(`${frontend}/accedi?errore=1`);
+  if (!user?.id || !c.env.JWT_SECRET) return c.redirect(`${frontend}/login?error=auth`);
 
   const player = await upsertGoogleUser(c.env.db, {
     sub: user.id,

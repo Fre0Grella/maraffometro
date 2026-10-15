@@ -28,14 +28,14 @@ const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][r
     <section v-else-if="!board?.length" class="empty card">
       <h2>Il tavolo è vuoto</h2>
       <p class="muted">Nessuna partita registrata ancora. La prima classifica nasce dalla prima partita.</p>
-      <RouterLink v-if="me" to="/nuova" class="btn">Inizia una partita</RouterLink>
-      <RouterLink v-else to="/accedi" class="btn">Accedi per iniziare</RouterLink>
+      <RouterLink v-if="me" to="/new" class="btn">Inizia una partita</RouterLink>
+      <RouterLink v-else to="/login" class="btn">Accedi per iniziare</RouterLink>
     </section>
 
     <template v-else>
       <ol v-if="ranked.length" class="board card">
         <li v-for="e in ranked" :key="e.player.id" :class="{ mine: e.player.id === me?.id }">
-          <RouterLink :to="`/giocatori/${e.player.id}`" class="row">
+          <RouterLink :to="`/players/${e.player.id}`" class="row">
             <span class="rank num" :class="podium(e.rank)">{{ e.rank }}</span>
             <PlayerAvatar :player="e.player" :size="40" />
             <span class="who">
@@ -56,7 +56,7 @@ const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][r
         <h2 class="section-title">In rodaggio <span class="muted">— meno di 8 set giocati</span></h2>
         <ul class="board card provisional">
           <li v-for="e in provisional" :key="e.player.id" :class="{ mine: e.player.id === me?.id }">
-            <RouterLink :to="`/giocatori/${e.player.id}`" class="row">
+            <RouterLink :to="`/players/${e.player.id}`" class="row">
               <span class="rank">·</span>
               <PlayerAvatar :player="e.player" :size="34" />
               <span class="who">
@@ -75,7 +75,7 @@ const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][r
     <template v-if="matches?.length">
       <div class="head sub">
         <h2 class="section-title">Ultime partite</h2>
-        <RouterLink to="/partite" class="muted">Tutte →</RouterLink>
+        <RouterLink to="/matches" class="muted">Tutte →</RouterLink>
       </div>
       <div class="matches">
         <MatchCard v-for="m in matches" :key="m.id" :match="m" />
@@ -83,7 +83,7 @@ const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][r
     </template>
 
     <p class="footer muted">
-      <RouterLink to="/privacy">Privacy</RouterLink> · <RouterLink to="/termini">Termini</RouterLink> ·
+      <RouterLink to="/privacy">Privacy</RouterLink> · <RouterLink to="/terms">Termini</RouterLink> ·
       <a href="https://github.com/Fre0Grella/maraffometro" target="_blank" rel="noopener">Codice</a>
     </p>
 

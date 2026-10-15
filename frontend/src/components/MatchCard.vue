@@ -25,7 +25,7 @@ const when = computed(() =>
 </script>
 
 <template>
-  <RouterLink :to="`/partite/${match.id}`" class="match card" :class="{ voided: match.voided }">
+  <RouterLink :to="`/matches/${match.id}`" class="match card" :class="{ voided: match.voided }">
     <div class="meta">
       <span>{{ when }}</span>
       <span v-if="match.voided" class="tag">annullata</span>

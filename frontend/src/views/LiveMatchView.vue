@@ -94,7 +94,7 @@ async function save() {
   sending.value = false;
   if (sent > 0) {
     invalidateResults(qc);
-    router.replace(`/partite/${submission.id}`);
+    router.replace(`/matches/${submission.id}`);
   } else {
     router.replace("/");
   }
@@ -127,7 +127,7 @@ function onVisible() {
   if (document.visibilityState === "visible") holdScreen();
 }
 onMounted(() => {
-  if (!live.active) router.replace("/nuova");
+  if (!live.active) router.replace("/new");
   holdScreen();
   document.addEventListener("visibilitychange", onVisible);
 });

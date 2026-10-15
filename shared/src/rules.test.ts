@@ -111,16 +111,16 @@ describe("matches", () => {
   });
 
   it("rejects an unfinished set that is not the last", () => {
-    expect(matchProblem({ sets: [{ target: 41, hands: hands([[6]]) }, sweep(31)] })).toMatch(/non è finito/);
+    expect(matchProblem({ sets: [{ target: 41, hands: hands([[6]]) }, sweep(31)] })).toMatch(/not finished/);
   });
 
   it("rejects hands after the set was decided", () => {
     const s = sweep(31);
-    expect(matchProblem({ sets: [{ ...s, hands: [...s.hands, ...hands([[3]])] }] })).toMatch(/dopo la fine/);
+    expect(matchProblem({ sets: [{ ...s, hands: [...s.hands, ...hands([[3]])] }] })).toMatch(/after the set was over/);
   });
 
   it("rejects impossible points", () => {
     const bad: Hand = { manoSeat: 0, points: [9, 9], maraffa: false };
-    expect(matchProblem({ sets: [{ target: 31, hands: [bad] }] })).toMatch(/più di 11/);
+    expect(matchProblem({ sets: [{ target: 31, hands: [bad] }] })).toMatch(/more than 11/);
   });
 });

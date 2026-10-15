@@ -38,10 +38,10 @@ onBeforeUnmount(() => window.removeEventListener("online", flush));
       </svg>
       <span>Maraffometro</span>
     </RouterLink>
-    <RouterLink v-if="me" to="/profilo" class="me" aria-label="Il tuo profilo">
+    <RouterLink v-if="me" to="/profile" class="me" aria-label="Il tuo profilo">
       <PlayerAvatar :player="me" :size="36" />
     </RouterLink>
-    <RouterLink v-else-if="me === null" to="/accedi" class="btn small">Accedi</RouterLink>
+    <RouterLink v-else-if="me === null" to="/login" class="btn small">Accedi</RouterLink>
   </header>
 
   <div v-if="!onTable && (waiting || refused)" class="outbox">
@@ -62,13 +62,13 @@ onBeforeUnmount(() => window.removeEventListener("online", flush));
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
       Classifica
     </RouterLink>
-    <RouterLink :to="live.active ? '/al-tavolo' : '/nuova'" class="tab play" :class="{ live: live.active }">
+    <RouterLink :to="live.active ? '/table' : '/new'" class="tab play" :class="{ live: live.active }">
       <span class="play-disc">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path v-if="live.active" d="M8 5v14l11-7z" /><path v-else d="M12 5v14M5 12h14" /></svg>
       </span>
       {{ live.active ? "Al tavolo" : "Nuova" }}
     </RouterLink>
-    <RouterLink to="/partite" class="tab" active-class="on">
+    <RouterLink to="/matches" class="tab" active-class="on">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="12" height="16" rx="2" /><path d="M8 21h10a2 2 0 0 0 2-2V7" /></svg>
       Partite
     </RouterLink>

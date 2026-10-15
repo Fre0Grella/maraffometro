@@ -23,7 +23,8 @@ export function toPlayerDTO(row: PlayerRow): PlayerDTO {
     emoji: row.emoji,
     color: row.color,
     motto: row.motto,
-    isGuest: row.google_sub === null,
+    isGuest: row.google_sub === null && row.deleted_at === null,
+    deleted: row.deleted_at !== null,
   };
 }
 
@@ -78,7 +79,7 @@ export async function upsertGoogleUser(
   }
   const id = crypto.randomUUID();
   const look = defaultLook(id);
-  const name = (user.name || user.email?.split("@")[0] || "Giocatore").slice(0, 30);
+  const name = (user.name || user.email?.split("@")[0] || "Player").slice(0, 30);
   await db
     .prepare(
       "INSERT INTO players (id, google_sub, email, picture_url, name, emoji, color) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -109,7 +110,7 @@ export function newClaimCode(): string {
 export async function deleteAccount(db: D1Database, playerId: string): Promise<void> {
   await db
     .prepare(
-      `UPDATE players SET google_sub = NULL, email = NULL, picture_url = NULL, name = 'Ex giocatore',
+      `UPDATE players SET google_sub = NULL, email = NULL, picture_url = NULL, name = 'Deleted player',
               emoji = '👤', color = '#8a8178', motto = '', claim_code = NULL, claim_code_expires_at = NULL,
               deleted_at = ?
         WHERE id = ?`,

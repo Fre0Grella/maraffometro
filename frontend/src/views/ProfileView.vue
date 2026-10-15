@@ -58,7 +58,7 @@ async function doLogout() {
         <strong>{{ preview.name }}</strong>
         <p v-if="form.motto" class="muted">“{{ form.motto }}”</p>
       </div>
-      <RouterLink :to="`/giocatori/${me.id}`" class="stats-link muted">Statistiche →</RouterLink>
+      <RouterLink :to="`/players/${me.id}`" class="stats-link muted">Statistiche →</RouterLink>
     </div>
 
     <form class="form" @submit.prevent="save">
@@ -143,7 +143,7 @@ async function doLogout() {
         <p v-if="deleteAccount.error.value" class="error">{{ deleteAccount.error.value.message }}</p>
       </div>
       <p class="muted links">
-        <RouterLink to="/privacy">Privacy</RouterLink> · <RouterLink to="/termini">Termini</RouterLink> ·
+        <RouterLink to="/privacy">Privacy</RouterLink> · <RouterLink to="/terms">Termini</RouterLink> ·
         <a href="https://github.com/Fre0Grella/maraffometro" target="_blank" rel="noopener">Codice</a>
       </p>
     </section>

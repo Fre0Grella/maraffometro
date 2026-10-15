@@ -10,15 +10,17 @@ export function createAppRouter(queryClient: QueryClient) {
     scrollBehavior: () => ({ top: 0 }),
     routes: [
       { path: "/", name: "home", component: () => import("@/views/HomeView.vue") },
-      { path: "/accedi", name: "login", component: () => import("@/views/LoginView.vue") },
-      { path: "/partite", name: "matches", component: () => import("@/views/MatchesView.vue") },
-      { path: "/partite/:id", name: "match", component: () => import("@/views/MatchView.vue"), props: true },
-      { path: "/giocatori/:id", name: "player", component: () => import("@/views/PlayerView.vue"), props: true },
-      { path: "/nuova", name: "new", component: () => import("@/views/NewMatchView.vue"), meta: { auth: true } },
-      { path: "/al-tavolo", name: "live", component: () => import("@/views/LiveMatchView.vue"), meta: { auth: true } },
-      { path: "/profilo", name: "profile", component: () => import("@/views/ProfileView.vue"), meta: { auth: true } },
+      { path: "/login", name: "login", component: () => import("@/views/LoginView.vue") },
+      { path: "/matches", name: "matches", component: () => import("@/views/MatchesView.vue") },
+      { path: "/matches/:id", name: "match", component: () => import("@/views/MatchView.vue"), props: true },
+      { path: "/players/:id", name: "player", component: () => import("@/views/PlayerView.vue"), props: true },
+      { path: "/new", name: "new", component: () => import("@/views/NewMatchView.vue"), meta: { auth: true } },
+      { path: "/table", name: "live", component: () => import("@/views/LiveMatchView.vue"), meta: { auth: true } },
+      { path: "/profile", name: "profile", component: () => import("@/views/ProfileView.vue"), meta: { auth: true } },
       { path: "/privacy", name: "privacy", component: () => import("@/views/PrivacyView.vue") },
-      { path: "/termini", name: "terms", component: () => import("@/views/TermsView.vue") },
+      { path: "/terms", name: "terms", component: () => import("@/views/TermsView.vue") },
+      // The address first given to Google's consent screen.
+      { path: "/termini", redirect: "/terms" },
       { path: "/:rest(.*)*", redirect: "/" },
     ],
   });
@@ -39,7 +41,7 @@ export function createAppRouter(queryClient: QueryClient) {
     }).catch(() => undefined);
     // Offline with no answer: let the live tracker open anyway, it needs no server.
     if (me === undefined) return true;
-    return me ? true : { name: "login", query: { poi: to.fullPath } };
+    return me ? true : { name: "login" };
   });
 
   return router;

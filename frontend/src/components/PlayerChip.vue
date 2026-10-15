@@ -8,7 +8,7 @@ defineProps<{ player: PlayerDTO; link?: boolean; size?: number }>();
 <template>
   <component
     :is="link ? 'RouterLink' : 'span'"
-    :to="link ? `/giocatori/${player.id}` : undefined"
+    :to="link ? `/players/${player.id}` : undefined"
     class="chip"
   >
     <PlayerAvatar :player="player" :size="size ?? 26" />
