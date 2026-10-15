@@ -66,28 +66,31 @@ export async function recomputeRatings(db: D1Database, recordedMatch?: { id: str
   const ratings = computeRatings(await loadResults(db), warm);
   const now = new Date().toISOString();
 
-  const stmts: D1PreparedStatement[] = [db.prepare("DELETE FROM ratings")];
-  for (const [id, r] of ratings) {
+  // One statement per table, whatever the number of players: see insertMatch.
+  const rows = [...ratings].map(([id, r]) => ({ id, ...r }));
+  const stmts: D1PreparedStatement[] = [
+    db.prepare("DELETE FROM ratings"),
+    db
+      .prepare(
+        `INSERT INTO ratings (player_id, theta, rating, uncertainty, sets_rated, updated_at)
+         SELECT json_extract(value, '$.id'), json_extract(value, '$.theta'), json_extract(value, '$.rating'), json_extract(value, '$.uncertainty'),
+                json_extract(value, '$.setsRated'), ?1
+           FROM json_each(?2)`,
+      )
+      .bind(now, JSON.stringify(rows)),
+  ];
+  if (recordedMatch) {
+    const changes = recordedMatch.players
+      .filter((id) => ratings.has(id))
+      .map((id) => ({ id, before: before.get(id) ?? 1500, after: ratings.get(id)!.rating }));
     stmts.push(
       db
         .prepare(
-          "INSERT INTO ratings (player_id, theta, rating, uncertainty, sets_rated, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+          `INSERT OR REPLACE INTO rating_changes (match_id, player_id, rating_before, rating_after)
+           SELECT ?1, json_extract(value, '$.id'), json_extract(value, '$.before'), json_extract(value, '$.after') FROM json_each(?2)`,
         )
-        .bind(id, r.theta, r.rating, r.uncertainty, r.setsRated, now),
+        .bind(recordedMatch.id, JSON.stringify(changes)),
     );
-  }
-  if (recordedMatch) {
-    for (const id of recordedMatch.players) {
-      const after = ratings.get(id);
-      if (!after) continue;
-      stmts.push(
-        db
-          .prepare(
-            "INSERT OR REPLACE INTO rating_changes (match_id, player_id, rating_before, rating_after) VALUES (?, ?, ?, ?)",
-          )
-          .bind(recordedMatch.id, id, before.get(id) ?? 1500, after.rating),
-      );
-    }
   }
   await db.batch(stmts);
 }

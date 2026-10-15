@@ -45,44 +45,52 @@ interface HandRow {
   maraffa_seat: Seat | null;
 }
 
-/** Stores a match that has already passed `matchProblem`. One batch, so it lands whole or not at all. */
+/**
+ * Stores a match that has already passed `matchProblem`. One batch, so it lands
+ * whole or not at all, and one statement per table however long the match:
+ * D1 on the Free plan allows 50 queries per request, and a best-of-three has
+ * thirty-odd hands.
+ */
 export async function insertMatch(db: D1Database, match: MatchSubmitDTO, recordedBy: string): Promise<void> {
   const result = scoreMatch(match);
-  const stmts: D1PreparedStatement[] = [
+  const seats = match.seats.map((player, seat) => ({ seat, player }));
+  const sets: { i: number; t: number; a: number; b: number; w: Team | null }[] = [];
+  const hands: { s: number; h: number; m: Seat; a: number; b: number; r: Seat | null }[] = [];
+  match.sets.forEach((set, i) => {
+    if (set.hands.length === 0) return;
+    const r = result.sets[i]!;
+    sets.push({ i, t: set.target, a: r.score[0], b: r.score[1], w: r.winner });
+    set.hands.forEach((h, j) =>
+      hands.push({ s: i, h: j, m: h.manoSeat, a: h.points[0], b: h.points[1], r: h.maraffaSeat }),
+    );
+  });
+
+  await db.batch([
     db
       .prepare(
         "INSERT INTO matches (id, played_at, recorded_by, sets_won_a, sets_won_b, winner_team) VALUES (?, ?, ?, ?, ?, ?)",
       )
       .bind(match.id, match.playedAt, recordedBy, result.setsWon[0], result.setsWon[1], result.winner),
-  ];
-  match.seats.forEach((playerId, seat) => {
-    stmts.push(
-      db
-        .prepare("INSERT INTO match_players (match_id, seat, team, player_id) VALUES (?, ?, ?, ?)")
-        .bind(match.id, seat, seat % 2, playerId),
-    );
-  });
-  match.sets.forEach((set, i) => {
-    if (set.hands.length === 0) return;
-    const r = result.sets[i]!;
-    stmts.push(
-      db
-        .prepare(
-          "INSERT INTO match_sets (match_id, set_index, target, score_a, score_b, winner_team) VALUES (?, ?, ?, ?, ?, ?)",
-        )
-        .bind(match.id, i, set.target, r.score[0], r.score[1], r.winner),
-    );
-    set.hands.forEach((h, j) => {
-      stmts.push(
-        db
-          .prepare(
-            "INSERT INTO hands (match_id, set_index, hand_index, mano_seat, points_a, points_b, maraffa_seat) VALUES (?, ?, ?, ?, ?, ?, ?)",
-          )
-          .bind(match.id, i, j, h.manoSeat, h.points[0], h.points[1], h.maraffaSeat),
-      );
-    });
-  });
-  await db.batch(stmts);
+    db
+      .prepare(
+        `INSERT INTO match_players (match_id, seat, team, player_id)
+         SELECT ?1, json_extract(value, '$.seat'), json_extract(value, '$.seat') % 2, json_extract(value, '$.player') FROM json_each(?2)`,
+      )
+      .bind(match.id, JSON.stringify(seats)),
+    db
+      .prepare(
+        `INSERT INTO match_sets (match_id, set_index, target, score_a, score_b, winner_team)
+         SELECT ?1, json_extract(value, '$.i'), json_extract(value, '$.t'), json_extract(value, '$.a'), json_extract(value, '$.b'), json_extract(value, '$.w') FROM json_each(?2)`,
+      )
+      .bind(match.id, JSON.stringify(sets)),
+    db
+      .prepare(
+        `INSERT INTO hands (match_id, set_index, hand_index, mano_seat, points_a, points_b, maraffa_seat)
+         SELECT ?1, json_extract(value, '$.s'), json_extract(value, '$.h'), json_extract(value, '$.m'), json_extract(value, '$.a'), json_extract(value, '$.b'), json_extract(value, '$.r')
+           FROM json_each(?2)`,
+      )
+      .bind(match.id, JSON.stringify(hands)),
+  ]);
 }
 
 export async function getMatchRow(db: D1Database, id: string): Promise<MatchRow | null> {
@@ -158,6 +166,7 @@ export async function getMatchDetail(
   db: D1Database,
   id: string,
   viewerId: string | null,
+  viewerIsAdmin = false,
 ): Promise<MatchDetailDTO | null> {
   const m = await getMatchRow(db, id);
   if (!m) return null;
@@ -180,7 +189,7 @@ export async function getMatchDetail(
     ratingChanges: (changes!.results as { player_id: string; rating_before: number; rating_after: number }[]).map(
       (c) => ({ playerId: c.player_id, before: Math.round(c.rating_before), after: Math.round(c.rating_after) }),
     ),
-    canVoid: viewerId !== null && !summary!.voided && (await canVoid(db, m, viewerId)),
+    canVoid: viewerId !== null && !summary!.voided && (viewerIsAdmin || (await canVoid(db, m, viewerId))),
   };
 }
 

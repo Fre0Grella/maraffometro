@@ -9,6 +9,9 @@ import { join } from "node:path";
 
 type Value = string | number | null;
 
+/** Statements executed, batch members counted one by one, as D1's per-request limit may count them. */
+export const queryCount = { value: 0 };
+
 class Statement {
   constructor(
     private readonly db: DatabaseSync,
@@ -21,20 +24,24 @@ class Statement {
   }
 
   async first<T>(): Promise<T | null> {
+    queryCount.value++;
     return (this.db.prepare(this.sql).get(...this.params) as T | undefined) ?? null;
   }
 
   async all<T>(): Promise<{ results: T[] }> {
+    queryCount.value++;
     return { results: this.db.prepare(this.sql).all(...this.params) as T[] };
   }
 
   async run(): Promise<{ results: never[] }> {
+    queryCount.value++;
     this.db.prepare(this.sql).run(...this.params);
     return { results: [] };
   }
 
   /** Synchronous form used inside a batch transaction. */
   execute(): { results: unknown[] } {
+    queryCount.value++;
     const stmt = this.db.prepare(this.sql);
     if (/^\s*(SELECT|WITH)/i.test(this.sql)) return { results: stmt.all(...this.params) };
     stmt.run(...this.params);
