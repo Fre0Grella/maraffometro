@@ -3,3 +3,5 @@
 JWT_SECRET=change-me-to-a-long-random-string
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+# Emails that may void any match. Demo players are <name>@demo.local.
+ADMIN_EMAILS=

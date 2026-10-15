@@ -12,7 +12,7 @@ import {
   type Seat,
 } from "@maraffometro/shared";
 import { createApp } from "../src/index";
-import { createTestD1 } from "./d1";
+import { createTestD1, queryCount } from "./d1";
 
 const app = createApp();
 let env: Record<string, unknown>;
@@ -125,6 +125,19 @@ describe("recording a match", () => {
     expect(stats.avgPointsMano! + stats.avgPointsFuoriMano!).toBeGreaterThan(0);
   });
 
+  it("saves a long best-of-three within D1's 50 queries per request", async () => {
+    const { cookie, me } = await login("Marco");
+    const gs = [];
+    for (let i = 0; i < 20; i++) gs.push(await guest(cookie, `G${i}`)); // a bigger group to rate
+    for (let i = 0; i < 6; i++) {
+      await call("POST", "/matches", cookie, match([me.id, gs[i]!.id, gs[i + 6]!.id, gs[i + 12]!.id], [setWonBy(0, 31)]));
+    }
+    const long = match([me.id, gs[0]!.id, gs[1]!.id, gs[2]!.id], [setWonBy(0, 51), setWonBy(1, 51), setWonBy(0, 51)]);
+    queryCount.value = 0;
+    expect((await call("POST", "/matches", cookie, long)).status).toBe(201);
+    expect(queryCount.value).toBeLessThan(20);
+  });
+
   it("refuses a match the recorder did not play in", async () => {
     const { cookie } = await login("Marco");
     const gs = [await guest(cookie, "A"), await guest(cookie, "B"), await guest(cookie, "C"), await guest(cookie, "D")];
@@ -156,6 +169,21 @@ describe("recording a match", () => {
     expect((await call("POST", `/matches/${m.id}/void`, stranger)).status).toBe(403);
     expect((await call("POST", `/matches/${m.id}/void`, cookie)).status).toBe(200);
     expect(((await (await call("GET", "/leaderboard")).json()) as unknown[]).length).toBe(0);
+  });
+});
+
+describe("admins", () => {
+  it("can void any match", async () => {
+    env.ADMIN_EMAILS = "boss@demo.local, other@example.com";
+    const { cookie, me } = await login("Marco");
+    const gs = [await guest(cookie, "A"), await guest(cookie, "B"), await guest(cookie, "C")];
+    const m = match([me.id, ...gs.map((g) => g.id)], [setWonBy(0, 31)]);
+    await call("POST", "/matches", cookie, m);
+
+    const boss = await login("Boss");
+    const detail = (await (await call("GET", `/matches/${m.id}`, boss.cookie)).json()) as MatchDetailDTO;
+    expect(detail.canVoid).toBe(true);
+    expect((await call("POST", `/matches/${m.id}/void`, boss.cookie)).status).toBe(200);
   });
 });
 

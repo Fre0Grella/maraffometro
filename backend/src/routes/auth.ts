@@ -104,7 +104,7 @@ auth.get("/dev", async (c) => {
   const name = (c.req.query("name") || "Demo").slice(0, 30);
   const player = await upsertGoogleUser(c.env.db, {
     sub: `dev-${name.toLowerCase()}`,
-    email: null,
+    email: `${name.toLowerCase().replace(/[^a-z0-9]+/g, "")}@demo.local`,
     name,
     picture: null,
   });

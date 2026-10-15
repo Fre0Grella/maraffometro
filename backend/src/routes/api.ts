@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { matchProblem, type ClaimCodeDTO, type MatchSubmitDTO } from "@maraffometro/shared";
@@ -19,6 +19,14 @@ import { leaderboard, recomputeRatings } from "../services/ratings";
 import { playerStats } from "../services/stats";
 
 const api = new Hono<AppEnv>();
+
+/** Whether the caller is one of the admins named in ADMIN_EMAILS. */
+async function isAdmin(c: Context<AppEnv>): Promise<boolean> {
+  if (!c.var.playerId || !c.env.ADMIN_EMAILS) return false;
+  const me = await getPlayer(c.env.db, c.var.playerId);
+  const admins = c.env.ADMIN_EMAILS.split(",").map((e) => e.trim().toLowerCase());
+  return !!me?.email && admins.includes(me.email.toLowerCase());
+}
 
 /** Turns a zod failure into the same `{ error }` shape every other refusal has. */
 const invalid = (
@@ -175,7 +183,7 @@ api.get("/matches", async (c) => {
 });
 
 api.get("/matches/:id", async (c) => {
-  const match = await getMatchDetail(c.env.db, c.req.param("id"), c.var.playerId);
+  const match = await getMatchDetail(c.env.db, c.req.param("id"), c.var.playerId, await isAdmin(c));
   if (!match) return c.json({ error: "Partita non trovata" }, 404);
   return c.json(match);
 });
@@ -218,8 +226,8 @@ api.post("/matches/:id/void", requireAuth, async (c) => {
   const m = await getMatchRow(c.env.db, c.req.param("id"));
   if (!m) return c.json({ error: "Partita non trovata" }, 404);
   if (m.voided_at) return c.json({ ok: true });
-  if (!(await canVoid(c.env.db, m, c.var.playerId!))) {
-    return c.json({ error: "Solo chi ha giocato o registrato la partita può annullarla" }, 403);
+  if (!(await canVoid(c.env.db, m, c.var.playerId!)) && !(await isAdmin(c))) {
+    return c.json({ error: "Solo chi ha giocato o registrato la partita (o un admin) può annullarla" }, 403);
   }
   await c.env.db
     .prepare("UPDATE matches SET voided_at = ?, voided_by = ? WHERE id = ?")
