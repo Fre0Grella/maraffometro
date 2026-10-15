@@ -58,7 +58,7 @@ function setWonBy(team: 0 | 1, target: 31 | 41 | 51, firstMano: Seat = 0): { tar
   let maraffaDone = false;
   while (score < target) {
     const winnerIsMano = mano % 2 === team;
-    const maraffa = winnerIsMano && !maraffaDone;
+    const maraffa: boolean = winnerIsMano && !maraffaDone;
     maraffaDone ||= maraffa;
     hands.push(handFromManoPoints(mano, winnerIsMano ? 8 : 3, maraffa));
     score += 8 + (maraffa ? 3 : 0);
