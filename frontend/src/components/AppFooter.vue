@@ -45,10 +45,10 @@ const year = new Date().getFullYear();
 <style scoped>
 .app-footer {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
+  gap: 8px;
+  text-align: center;
   margin-top: 32px;
   padding-top: 14px;
   border-top: 1px solid var(--line);
@@ -59,6 +59,7 @@ const year = new Date().getFullYear();
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 .app-footer-sep {

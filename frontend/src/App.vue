@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr auto 1fr;
   align-items: end;
   padding: 6px 12px calc(8px + env(safe-area-inset-bottom));
-  background: var(--card);
+  background: var(--paper);
   border-top: 1px solid var(--line);
 }
 .tab {
@@ -236,7 +236,7 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   background: var(--team-a);
   box-shadow: 0 6px 16px -6px var(--team-a);
-  border: 4px solid var(--card);
+  border: 4px solid var(--paper);
 }
 .play-disc svg {
   stroke: #fff;

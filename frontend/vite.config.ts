@@ -44,7 +44,8 @@ export default defineConfig({
         display: "standalone",
         orientation: "portrait",
         background_color: "#f4ecdd",
-        theme_color: "#1f4d3c",
+        // Same cream as the launch screen, so the system splash and ours blend.
+        theme_color: "#f4ecdd",
         icons: [
           { src: "/pwa-192.png", sizes: "192x192", type: "image/png" },
           { src: "/pwa-512.png", sizes: "512x512", type: "image/png" },

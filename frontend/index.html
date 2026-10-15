@@ -15,6 +15,143 @@
     <title>Maraffometro</title>
   </head>
   <body>
+    <!--
+      Launch screen: plain HTML and CSS so it paints before any JavaScript.
+      Three cards, ace, two and three (a maraffa), are dealt and fanned while
+      the app loads; main.ts fades it out once the first page is ready.
+    -->
+    <style>
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 34px;
+        background: #f4ecdd;
+        transition: opacity 0.35s ease;
+      }
+      #splash.out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .splash-fan {
+        position: relative;
+        width: 250px;
+        height: 150px;
+        animation: splash-float 2.4s ease-in-out 1s infinite alternate;
+      }
+      .splash-card {
+        position: absolute;
+        left: 50%;
+        top: 14px;
+        width: 82px;
+        height: 120px;
+        margin-left: -41px;
+        border-radius: 11px;
+        background: #fffaf1;
+        border: 2.5px solid #2a1f17;
+        box-shadow: 0 10px 24px -14px rgba(42, 31, 23, 0.7);
+        transform-origin: 50% 120%;
+        opacity: 0;
+        animation: splash-deal 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) forwards;
+      }
+      .splash-card b {
+        position: absolute;
+        font: 800 22px/1 Georgia, "Times New Roman", serif;
+        color: var(--c);
+      }
+      .splash-card b:first-child {
+        top: 7px;
+        left: 9px;
+      }
+      .splash-card b:last-of-type {
+        right: 9px;
+        bottom: 7px;
+        transform: rotate(180deg);
+      }
+      /* The denari coin in the middle of each card. */
+      .splash-card i {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 34px;
+        height: 34px;
+        margin: -17px 0 0 -17px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #f3d58a 0 36%, var(--c) 38% 100%);
+        box-shadow: inset 0 0 0 2px rgba(42, 31, 23, 0.18);
+      }
+      .splash-card.c1 { --c: #b4442c; --d: 0.05s; --x: -58px; --r: -15deg; }
+      .splash-card.c2 { --c: #c08a1e; --d: 0.2s; --x: 0px; --r: 0deg; }
+      .splash-card.c3 { --c: #24604a; --d: 0.35s; --x: 58px; --r: 15deg; }
+      .splash-name {
+        font: 800 30px/1 Georgia, "Times New Roman", serif;
+        letter-spacing: -0.02em;
+        color: #2a1f17;
+        opacity: 0;
+        animation: splash-rise 0.5s ease 0.7s forwards;
+      }
+      @keyframes splash-deal {
+        from {
+          opacity: 0;
+          transform: translate(0, 90px) rotate(0deg) scale(0.9);
+        }
+        60% {
+          opacity: 1;
+        }
+        to {
+          opacity: 1;
+          transform: translate(var(--x), 0) rotate(var(--r)) scale(1);
+        }
+      }
+      @keyframes splash-rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      @keyframes splash-float {
+        to {
+          transform: translateY(-6px);
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        #splash {
+          background: #1b1612;
+        }
+        .splash-name {
+          color: #f1e6d4;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .splash-card,
+        .splash-name {
+          animation: none;
+          opacity: 1;
+          transform: translate(var(--x, 0), 0) rotate(var(--r, 0));
+        }
+        .splash-name {
+          transform: none;
+        }
+        .splash-fan {
+          animation: none;
+        }
+      }
+    </style>
+    <div id="splash" aria-hidden="true">
+      <div class="splash-fan">
+        <div class="splash-card c1"><b>A</b><i></i><b>A</b></div>
+        <div class="splash-card c2"><b>2</b><i></i><b>2</b></div>
+        <div class="splash-card c3"><b>3</b><i></i><b>3</b></div>
+      </div>
+      <div class="splash-name">Maraffometro</div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
