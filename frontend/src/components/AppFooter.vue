@@ -37,8 +37,6 @@ const year = new Date().getFullYear();
       <span class="app-footer-sep" aria-hidden="true">·</span>
       <a href="https://github.com/Fre0Grella" target="_blank" rel="noreferrer">GitHub</a>
       <span class="app-footer-sep" aria-hidden="true">·</span>
-      <a href="https://www.linkedin.com/in/marco-galeri-2b6500384/" target="_blank" rel="noreferrer">LinkedIn</a>
-      <span class="app-footer-sep" aria-hidden="true">·</span>
       <a class="app-footer-donate" href="https://ko-fi.com/freogrella" target="_blank" rel="noreferrer">☕ Donate</a>
     </div>
   </footer>
