@@ -1,0 +1,6 @@
+# The service worker and manifest must be revalidated on every load, or
+# phones keep running an old version of the app.
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache

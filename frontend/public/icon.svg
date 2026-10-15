@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full-bleed square: launchers mask it to a circle or squircle, so the card stays inside the central 80%. -->
+  <rect width="512" height="512" fill="#1f4d3c"/>
+  <circle cx="256" cy="256" r="236" fill="#24604a"/>
+  <g transform="rotate(-8 256 256)">
+    <rect x="162" y="112" width="188" height="288" rx="26" fill="#f4ecdd" stroke="#2a1f17" stroke-width="10"/>
+    <circle cx="256" cy="256" r="62" fill="#b4442c"/>
+    <circle cx="256" cy="256" r="62" fill="none" stroke="#2a1f17" stroke-width="6" opacity="0.25"/>
+    <circle cx="256" cy="256" r="28" fill="#c08a1e"/>
+    <path d="M196 150h30M286 362h30" stroke="#2a1f17" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,9 +1,0 @@
-{
-  "name": "Maraffometro",
-  "short_name": "Maraffometro",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#f4ecdd",
-  "theme_color": "#f4ecdd",
-  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
-}

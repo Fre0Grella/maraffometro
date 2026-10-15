@@ -16,6 +16,10 @@ Romagna card game, made for the friends who play it every lunch break.
   suffered, average points *di mano* and *fuori mano*, form, history.
 - **Guests**: seat a friend who hasn't signed in yet; they claim their history
   later with a code.
+- **Installable, works offline** (PWA): after the first visit the whole app
+  lives on the phone. A match can be set up, scored and saved with no signal;
+  it is sent by itself when the connection comes back. New versions are
+  offered with an "Aggiorna" banner, never swapped in mid-match.
 
 ## Architecture
 

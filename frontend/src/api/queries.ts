@@ -11,6 +11,7 @@ import type {
   PlayerUpdateDTO,
 } from "@maraffometro/shared";
 import { api, ApiError } from "./client";
+import { clearApiCache } from "@/composables/pwa";
 
 export const keys = {
   me: ["me"] as const,
@@ -124,6 +125,7 @@ export function useDeleteAccount() {
   return useMutation({
     mutationFn: () => api<{ ok: true }>("/me", { method: "DELETE" }),
     onSuccess: () => {
+      clearApiCache();
       qc.setQueryData(keys.me, null);
       qc.invalidateQueries({ queryKey: keys.players });
       invalidateResults(qc);
@@ -135,6 +137,9 @@ export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => api<{ ok: true }>("/session", { method: "DELETE" }),
-    onSuccess: () => qc.setQueryData(keys.me, null),
+    onSuccess: () => {
+      clearApiCache();
+      qc.setQueryData(keys.me, null);
+    },
   });
 }

@@ -5,6 +5,7 @@ import PlayerAvatar from "@/components/PlayerAvatar.vue";
 import MatchCard from "@/components/MatchCard.vue";
 import BottomSheet from "@/components/BottomSheet.vue";
 import AppFooter from "@/components/AppFooter.vue";
+import InstallCard from "@/components/InstallCard.vue";
 
 const { data: board, isLoading, error } = useLeaderboard();
 const { data: matches } = useMatches(undefined, 3);
@@ -23,6 +24,8 @@ const podium = (rank: number, provisional: boolean) =>
       <h1>Classifica</h1>
       <button class="btn small ghost" @click="explain = true">Come funziona?</button>
     </div>
+
+    <InstallCard />
 
     <p v-if="isLoading" class="muted">Carico la classifica…</p>
     <p v-else-if="error" class="error">{{ error.message }}</p>

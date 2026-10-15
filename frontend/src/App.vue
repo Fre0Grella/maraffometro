@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
-import { invalidateResults, useMe } from "@/api/queries";
+import { useRegisterSW } from "virtual:pwa-register/vue";
+import type { PlayerDTO } from "@maraffometro/shared";
+import { api } from "@/api/client";
+import { invalidateResults, keys, useMe } from "@/api/queries";
+import { online } from "@/composables/pwa";
 import { useLiveMatch } from "@/stores/live";
 import { useOutbox } from "@/stores/outbox";
 import PlayerAvatar from "@/components/PlayerAvatar.vue";
@@ -18,14 +22,53 @@ const waiting = computed(() => outbox.pending.filter((p) => !p.error).length);
 const refused = computed(() => outbox.pending.filter((p) => p.error).length);
 
 async function flush() {
+  if (!online.value) return;
   if ((await outbox.flush()) > 0) invalidateResults(qc);
 }
 
+// The service worker: precaches the app, and offers new versions instead of
+// swapping them in, so nobody's match gets reloaded under them.
+const { needRefresh, updateServiceWorker } = useRegisterSW({
+  // Register now: this runs after the page's load event, which a deferred
+  // registration would wait for in vain.
+  immediate: true,
+  onRegisterError(error) {
+    console.error("[sw] registration failed", error);
+  },
+  onRegisteredSW(_url, registration) {
+    if (registration) setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
+  },
+});
+
+// Load the player list while there's signal, so the service worker has it
+// for seating players offline.
+watch(
+  [me, online],
+  ([player, isOnline]) => {
+    if (player && isOnline) qc.prefetchQuery({ queryKey: keys.players, queryFn: () => api<PlayerDTO[]>("/players") });
+  },
+  { immediate: true },
+);
+
+// Matches saved offline go out when the signal comes back, when the app is
+// brought to the front, and every minute while any are waiting.
+function onVisible() {
+  if (document.visibilityState === "visible") flush();
+}
+let retry: ReturnType<typeof setInterval> | undefined;
 onMounted(() => {
   flush();
   window.addEventListener("online", flush);
+  document.addEventListener("visibilitychange", onVisible);
+  retry = setInterval(() => {
+    if (waiting.value) flush();
+  }, 60_000);
 });
-onBeforeUnmount(() => window.removeEventListener("online", flush));
+onBeforeUnmount(() => {
+  window.removeEventListener("online", flush);
+  document.removeEventListener("visibilitychange", onVisible);
+  clearInterval(retry);
+});
 </script>
 
 <template>
@@ -38,14 +81,24 @@ onBeforeUnmount(() => window.removeEventListener("online", flush));
       </svg>
       <span>Maraffometro</span>
     </RouterLink>
+    <span v-if="!online" class="offline" role="status">offline</span>
     <RouterLink v-if="me" to="/profile" class="me" aria-label="Il tuo profilo">
       <PlayerAvatar :player="me" :size="36" />
     </RouterLink>
     <RouterLink v-else-if="me === null" to="/login" class="btn small">Accedi</RouterLink>
   </header>
 
+  <div v-if="!onTable && needRefresh" class="outbox update">
+    <span>È pronta una nuova versione.</span>
+    <button class="btn small" @click="updateServiceWorker(true)">Aggiorna</button>
+  </div>
+
   <div v-if="!onTable && (waiting || refused)" class="outbox">
-    <template v-if="waiting">
+    <template v-if="waiting && !online">
+      {{ waiting === 1 ? "1 partita salvata sul telefono" : `${waiting} partite salvate sul telefono` }}:
+      partirà appena torni online.
+    </template>
+    <template v-else-if="waiting">
       {{ waiting === 1 ? "1 partita in attesa di invio" : `${waiting} partite in attesa di invio` }}
       <button class="btn small ghost" :disabled="outbox.flushing" @click="flush">Riprova</button>
     </template>
@@ -102,6 +155,21 @@ onBeforeUnmount(() => window.removeEventListener("online", flush));
 .me {
   display: block;
   border-radius: 50%;
+}
+.offline {
+  margin-left: auto;
+  margin-right: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--ink-2);
+  color: var(--paper);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.outbox.update {
+  background: var(--team-b-soft);
 }
 .outbox {
   max-width: 608px;
