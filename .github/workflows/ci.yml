@@ -46,7 +46,7 @@ jobs:
 
       - name: Apply D1 migrations
         working-directory: backend
-        run: npx wrangler d1 migrations apply maraffometro-db --remote
+        run: npx wrangler d1 migrations apply maraffometro-db --remote --env=""
 
       # Before the Pages project: its service binding points at this Worker.
       - name: Deploy Worker
@@ -55,13 +55,15 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_EMAILS: ${{ secrets.ADMIN_EMAILS }}
         run: |
-          npx wrangler deploy --minify
+          npx wrangler deploy --minify --env=""
           node -e '
-            const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET } = process.env;
-            require("fs").writeFileSync("/tmp/secrets.json", JSON.stringify({ GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET }));
+            const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET, ADMIN_EMAILS = "" } = process.env;
+            const secrets = { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET, ADMIN_EMAILS };
+            require("fs").writeFileSync("/tmp/secrets.json", JSON.stringify(secrets));
           '
-          npx wrangler secret bulk /tmp/secrets.json
+          npx wrangler secret bulk /tmp/secrets.json --env=""
           rm /tmp/secrets.json
 
       - name: Build frontend

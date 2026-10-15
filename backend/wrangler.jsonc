@@ -4,6 +4,8 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
+  // Reached only through the Pages service binding: no public workers.dev URL.
+  "workers_dev": false,
   // Production. `scripts/setup-cloudflare.sh` creates the database and writes
   // its id here; until then the placeholder only blocks remote commands.
   "d1_databases": [

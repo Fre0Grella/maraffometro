@@ -72,8 +72,8 @@ Pushing to `main` runs CI and, once set up, deploys D1 migrations → Worker →
    ```
    It creates the D1 database and the Pages project, writes their id/URL into
    `backend/wrangler.jsonc`, stores `CLOUDFLARE_API_TOKEN`,
-   `CLOUDFLARE_ACCOUNT_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and a
-   generated `JWT_SECRET` as GitHub secrets, enables deploys
+   `CLOUDFLARE_ACCOUNT_ID`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+   `ADMIN_EMAILS` and a generated `JWT_SECRET` as GitHub secrets, enables deploys
    (`DEPLOY_ENABLED` variable), and offers to push.
 
 ## Rules as implemented
@@ -86,7 +86,9 @@ Pushing to `main` runs CI and, once set up, deploys D1 migrations → Worker →
   4 of denari again. Both can be overridden at the table.
 - A match is any number of sets. It can be stopped at any time: finished sets
   count, an unfinished one only feeds the statistics. Level sets = draw.
-- Only someone seated can record a match; anyone seated (or the recorder) can void it.
+- Only someone seated can record a match; anyone seated, the recorder, or an
+  admin (`ADMIN_EMAILS`) can void it. Sign-up is open, so the admin override is
+  how fake matches get removed.
 
 ## License
 

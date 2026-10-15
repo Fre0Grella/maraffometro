@@ -32,6 +32,7 @@ ask CLOUDFLARE_API_TOKEN "Cloudflare API token" secret
 ask CLOUDFLARE_ACCOUNT_ID "Cloudflare account id"
 ask GOOGLE_CLIENT_ID "Google OAuth client id"
 ask GOOGLE_CLIENT_SECRET "Google OAuth client secret" secret
+ask ADMIN_EMAILS "Admin Google email(s), comma-separated (can void any match)"
 
 cf() { # method, path, [json body]
   curl -sS -X "$1" "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}$2" \
@@ -72,7 +73,7 @@ node -e '
 
 echo "→ GitHub secrets"
 JWT_SECRET="$(node -e 'console.log(require("crypto").randomBytes(48).toString("base64url"))')"
-for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
+for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET ADMIN_EMAILS; do
   printf '%s' "${!name}" | gh secret set "$name"
 done
 # Keep an existing JWT secret: replacing it signs everyone out.
