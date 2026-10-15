@@ -3,6 +3,7 @@ import { computed, ref, watchEffect } from "vue";
 import { useRouter } from "vue-router";
 import { useClaim, useDeleteAccount, useLogout, useMe, useUpdateProfile } from "@/api/queries";
 import PlayerAvatar from "@/components/PlayerAvatar.vue";
+import AppFooter from "@/components/AppFooter.vue";
 
 const router = useRouter();
 const { data: me } = useMe();
@@ -142,11 +143,9 @@ async function doLogout() {
         </div>
         <p v-if="deleteAccount.error.value" class="error">{{ deleteAccount.error.value.message }}</p>
       </div>
-      <p class="muted links">
-        <RouterLink to="/privacy">Privacy</RouterLink> · <RouterLink to="/terms">Termini</RouterLink> ·
-        <a href="https://github.com/Fre0Grella/maraffometro" target="_blank" rel="noopener">Codice</a>
-      </p>
     </section>
+
+    <AppFooter />
   </main>
 </template>
 
@@ -264,8 +263,5 @@ legend {
 .confirm p {
   margin: 0 0 10px;
 }
-.links {
-  font-size: 0.85rem;
-  margin: 0;
-}
+
 </style>

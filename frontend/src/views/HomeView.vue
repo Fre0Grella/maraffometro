@@ -4,6 +4,7 @@ import { useLeaderboard, useMatches, useMe } from "@/api/queries";
 import PlayerAvatar from "@/components/PlayerAvatar.vue";
 import MatchCard from "@/components/MatchCard.vue";
 import BottomSheet from "@/components/BottomSheet.vue";
+import AppFooter from "@/components/AppFooter.vue";
 
 const { data: board, isLoading, error } = useLeaderboard();
 const { data: matches } = useMatches(undefined, 3);
@@ -84,10 +85,7 @@ const podium = (rank: number, provisional: boolean) =>
       </div>
     </template>
 
-    <p class="footer muted">
-      <RouterLink to="/privacy">Privacy</RouterLink> · <RouterLink to="/terms">Termini</RouterLink> ·
-      <a href="https://github.com/Fre0Grella/maraffometro" target="_blank" rel="noopener">Codice</a>
-    </p>
+    <AppFooter />
 
     <BottomSheet :open="explain" title="Come funziona la classifica" @close="explain = false">
       <div class="explain">
@@ -240,11 +238,6 @@ h1 {
 .matches {
   display: grid;
   gap: 10px;
-}
-.footer {
-  margin-top: 32px;
-  text-align: center;
-  font-size: 0.82rem;
 }
 .explain p {
   margin: 0 0 12px;
