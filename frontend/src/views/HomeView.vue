@@ -82,6 +82,11 @@ const podium = (rank: number) => (rank <= 3 ? ["", "gold", "silver", "bronze"][r
       </div>
     </template>
 
+    <p class="footer muted">
+      <RouterLink to="/privacy">Privacy</RouterLink> · <RouterLink to="/termini">Termini</RouterLink> ·
+      <a href="https://github.com/Fre0Grella/maraffometro" target="_blank" rel="noopener">Codice</a>
+    </p>
+
     <BottomSheet :open="explain" title="Come funziona la classifica" @close="explain = false">
       <div class="explain">
         <p>
@@ -208,6 +213,11 @@ h1 {
 .matches {
   display: grid;
   gap: 10px;
+}
+.footer {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 0.82rem;
 }
 .explain p {
   margin: 0 0 12px;

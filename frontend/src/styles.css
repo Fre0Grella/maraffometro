@@ -22,8 +22,8 @@
   --radius: 14px;
   --radius-sm: 10px;
   --shadow: 0 1px 0 rgba(42, 31, 23, 0.06), 0 6px 18px -10px rgba(42, 31, 23, 0.35);
-  --display: "Fraunces", Georgia, serif;
-  --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Fraunces Variable", Georgia, serif;
+  --body: "Figtree Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme: light;
 }
 

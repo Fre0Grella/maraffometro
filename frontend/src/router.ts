@@ -17,6 +17,8 @@ export function createAppRouter(queryClient: QueryClient) {
       { path: "/nuova", name: "new", component: () => import("@/views/NewMatchView.vue"), meta: { auth: true } },
       { path: "/al-tavolo", name: "live", component: () => import("@/views/LiveMatchView.vue"), meta: { auth: true } },
       { path: "/profilo", name: "profile", component: () => import("@/views/ProfileView.vue"), meta: { auth: true } },
+      { path: "/privacy", name: "privacy", component: () => import("@/views/PrivacyView.vue") },
+      { path: "/termini", name: "terms", component: () => import("@/views/TermsView.vue") },
       { path: "/:rest(.*)*", redirect: "/" },
     ],
   });

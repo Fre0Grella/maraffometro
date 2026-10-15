@@ -3,6 +3,9 @@ import { createPinia } from "pinia";
 import { QueryClient, VueQueryPlugin } from "@tanstack/vue-query";
 import App from "./App.vue";
 import { createAppRouter } from "./router";
+// Bundled rather than loaded from Google Fonts, so no visitor's IP goes to a third party.
+import "@fontsource-variable/fraunces/opsz.css";
+import "@fontsource-variable/figtree/wght.css";
 import "./styles.css";
 
 const queryClient = new QueryClient({

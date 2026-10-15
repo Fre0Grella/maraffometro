@@ -44,6 +44,12 @@ const devName = ref("Marco");
       <a class="btn ghost block" :href="`/auth/dev?name=${encodeURIComponent(devName)}`">Accesso demo</a>
       <small class="muted">Solo in sviluppo. Usa nomi diversi in finestre anonime per simulare più giocatori.</small>
     </form>
+
+    <p class="legal muted">
+      Accedendo accetti i <RouterLink to="/termini">termini d'uso</RouterLink> e l'<RouterLink to="/privacy"
+        >informativa privacy</RouterLink
+      >.
+    </p>
   </main>
 </template>
 
@@ -105,6 +111,11 @@ h1 {
 .google {
   background: var(--card);
   color: var(--ink);
+}
+.legal {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
 }
 .dev {
   display: grid;
