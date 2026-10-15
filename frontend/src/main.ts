@@ -25,16 +25,15 @@ const router = createAppRouter(queryClient);
 createApp(App).use(createPinia()).use(VueQueryPlugin, { queryClient }).use(router).mount("#app");
 
 /**
- * Fades out the launch screen (index.html) once the first page is on screen.
- * Opened as an installed app it stays long enough for the cards to finish
- * being dealt; in a browser tab it gets out of the way at once.
+ * Fades out the launch screen (index.html) once the first page is on screen,
+ * and not before the cards have been dealt, in the installed app and in the
+ * browser alike.
  */
 async function hideSplash() {
   const splash = document.getElementById("splash");
   if (!splash) return;
   await router.isReady().catch(() => {});
-  const installed = window.matchMedia("(display-mode: standalone)").matches;
-  const minimum = installed ? 1300 : 0;
+  const minimum = 1300;
   setTimeout(() => {
     splash.classList.add("out");
     setTimeout(() => splash.remove(), 400);

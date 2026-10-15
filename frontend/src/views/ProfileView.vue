@@ -21,7 +21,7 @@ watchEffect(() => {
   }
 });
 
-const EMOJIS = ["🃏", "🂡", "🍷", "🐓", "🦊", "🐗", "🌶️", "🍝", "🎩", "⚡", "🔥", "🌊", "🦉", "🐺", "🍀", "👑", "🎯", "🧠", "🥖", "☕"];
+const EMOJIS = ["🃏", "🂡", "🍷", "🐓", "🦊", "🐗", "🌶️", "🍝", "🎩", "⚡", "🔥", "🌊", "🦉", "🐺", "🍀", "👑", "🎯", "🧠", "🥖", "☕", "🍺", "🕷️"];
 const COLORS = ["#b4442c", "#2f6b4f", "#c08a1e", "#3d5a99", "#7a3e6e", "#4f7c8a", "#8a5a2b", "#2a1f17"];
 
 const preview = computed(() => ({ ...form.value, name: form.value.name || "?" }));
@@ -59,7 +59,12 @@ async function doLogout() {
         <strong>{{ preview.name }}</strong>
         <p v-if="form.motto" class="muted">“{{ form.motto }}”</p>
       </div>
-      <RouterLink :to="`/players/${me.id}`" class="stats-link muted">Statistiche →</RouterLink>
+      <RouterLink :to="`/players/${me.id}`" class="stats-link" aria-label="Le tue statistiche" title="Le tue statistiche">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path d="M4 20V11M10 20V5M16 20v-6M22 20H2" />
+          <path d="m4 8 6-4 6 6 5-4" />
+        </svg>
+      </RouterLink>
     </div>
 
     <form class="form" @submit.prevent="save">
@@ -165,11 +170,22 @@ h1 {
   font-style: italic;
 }
 .stats-link {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
   margin-left: auto;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+}
+.stats-link svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .form {
   display: grid;

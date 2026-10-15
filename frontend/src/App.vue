@@ -10,6 +10,7 @@ import { online } from "@/composables/pwa";
 import { useLiveMatch } from "@/stores/live";
 import { useOutbox } from "@/stores/outbox";
 import PlayerAvatar from "@/components/PlayerAvatar.vue";
+import NotificationBell from "@/components/NotificationBell.vue";
 
 const route = useRoute();
 const { data: me } = useMe();
@@ -81,11 +82,14 @@ onBeforeUnmount(() => {
       </svg>
       <span>Maraffometro</span>
     </RouterLink>
-    <span v-if="!online" class="offline" role="status">offline</span>
-    <RouterLink v-if="me" to="/profile" class="me" aria-label="Il tuo profilo">
-      <PlayerAvatar :player="me" :size="36" />
-    </RouterLink>
-    <RouterLink v-else-if="me === null" to="/login" class="btn small">Accedi</RouterLink>
+    <div class="actions">
+      <span v-if="!online" class="offline" role="status">offline</span>
+      <NotificationBell v-if="me" />
+      <RouterLink v-if="me" to="/profile" class="me" aria-label="Il tuo profilo">
+        <PlayerAvatar :player="me" :size="36" />
+      </RouterLink>
+      <RouterLink v-else-if="me === null" to="/login" class="btn small">Accedi</RouterLink>
+    </div>
   </header>
 
   <div v-if="!onTable && needRefresh" class="outbox update">
@@ -112,7 +116,10 @@ onBeforeUnmount(() => {
 
   <nav v-if="!onTable" class="tabbar" aria-label="Navigazione">
     <RouterLink to="/" class="tab" exact-active-class="on">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2 21h20M9 21V8h6v13M3 21v-8h6M15 21v-5h6v5" />
+        <path d="m12 2.6.8 1.6 1.8.3-1.3 1.2.3 1.8-1.6-.8-1.6.8.3-1.8-1.3-1.2 1.8-.3z" />
+      </svg>
       Classifica
     </RouterLink>
     <RouterLink :to="live.active ? '/table' : '/new'" class="tab play" :class="{ live: live.active }">
@@ -152,13 +159,16 @@ onBeforeUnmount(() => {
   font-size: 1.3rem;
   letter-spacing: -0.02em;
 }
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .me {
   display: block;
   border-radius: 50%;
 }
 .offline {
-  margin-left: auto;
-  margin-right: 10px;
   padding: 2px 10px;
   border-radius: 999px;
   background: var(--ink-2);
@@ -199,7 +209,8 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr auto 1fr;
   align-items: end;
   padding: 6px 12px calc(8px + env(safe-area-inset-bottom));
-  background: var(--bar);
+  background: var(--card);
+  border-top: 1px solid var(--line);
 }
 .tab {
   display: grid;
@@ -209,7 +220,7 @@ onBeforeUnmount(() => {
   font-size: 0.75rem;
   font-weight: 600;
   text-decoration: none;
-  color: color-mix(in srgb, var(--bar-ink) 62%, transparent);
+  color: var(--ink-2);
 }
 .tab svg {
   width: 24px;
@@ -221,10 +232,10 @@ onBeforeUnmount(() => {
   stroke-linejoin: round;
 }
 .tab.on {
-  color: var(--bar-ink);
+  color: var(--ink);
 }
 .play {
-  color: var(--bar-ink);
+  color: var(--ink);
   margin-top: -22px;
 }
 .play-disc {
@@ -235,19 +246,18 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   background: var(--team-a);
   box-shadow: 0 6px 16px -6px var(--team-a);
-  border: 4px solid var(--bar);
+  border: 4px solid var(--card);
 }
 .play-disc svg {
   stroke: #fff;
   stroke-width: 2.6;
 }
-/* A match in progress: gold, which stands out on the green bar. */
 .play.live .play-disc {
-  background: var(--gold);
-  box-shadow: 0 6px 16px -6px #000;
+  background: var(--team-b);
+  box-shadow: 0 6px 16px -6px var(--team-b);
 }
 .play.live .play-disc svg {
-  fill: #2a1f17;
+  fill: #fff;
   stroke: none;
 }
 </style>

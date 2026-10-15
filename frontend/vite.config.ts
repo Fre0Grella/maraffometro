@@ -44,10 +44,10 @@ export default defineConfig({
         display: "standalone",
         orientation: "portrait",
         background_color: "#f4ecdd",
-        // Android paints its system navigation bar with this: the same felt
-        // green as the tab bar (--bar in styles.css), so the two blend. The
-        // status bar follows the page's own theme-color meta (cream).
-        theme_color: "#1f4d3c",
+        // The tab bar's colour in dark mode (--card), so the installed app's
+        // system bars match it. The status bar follows the page's own
+        // theme-color meta (cream in light mode).
+        theme_color: "#2a221c",
         icons: [
           { src: "/pwa-192.png", sizes: "192x192", type: "image/png" },
           { src: "/pwa-512.png", sizes: "512x512", type: "image/png" },
